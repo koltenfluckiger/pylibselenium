@@ -1,6 +1,6 @@
 try:
     from abc import ABC
-    from typing import List
+    from typing import List, Dict
 except ImportError as err:
     print("Unable to import: {}".format(err))
     exit()
@@ -18,9 +18,10 @@ class BrowserOptions(ABC):
 
 class ChromeOptions(BrowserOptions):
 
-    def __init__(self, arguments: List[str] = [],
+    def __init__(self, arguments: List[str] = [], preferences: Dict = {},
                  extension_paths: List[str] = [], binary_path: str = None, disable_bot_detection_flag: bool = False) -> None:
         self.arguments = arguments
+        self.preferences = preferences
         self.extension_paths = extension_paths
         self.binary_path = binary_path
         self.disable_bot_detection_flag = disable_bot_detection_flag
@@ -56,6 +57,7 @@ class ChromeOptions(BrowserOptions):
                 "loggingPrefs", {'performance': 'ALL', 'browser': 'ALL'})
             options.set_capability("goog:loggingPrefs", {
                                    'performance': 'ALL', 'browser': 'ALL'})
+            options.add_experimental_option("prefs", self.preferences)
             self.options = options
             return options
         except Exception as err:
