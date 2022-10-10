@@ -36,7 +36,6 @@ class Firefox(DriverInterface):
         try:
             return webdriver.Firefox(service=self.service, options=self.options)
         except Exception as err:
-            print(f"HERE {err}")
             raise Exception(err)
 
 
@@ -49,5 +48,18 @@ class Safari(DriverInterface):
     def factory(self) -> object:
         try:
             return webdriver.Safari(executable_path=self.executable_path, service_args=self.service_args)
+        except Exception as err:
+            print(err)
+
+
+class Remote(DriverInterface):
+
+    def __init__(self, command_executor: str, options: BrowserOptions) -> None:
+        self.command_executor = command_executor
+        self.options = options
+
+    def factory(self) -> object:
+        try:
+            return webdriver.Remote(command_executor=self.command_executor, options=self.options)
         except Exception as err:
             print(err)
