@@ -19,12 +19,13 @@ class BrowserOptions(ABC):
 class ChromeOptions(BrowserOptions):
 
     def __init__(self, arguments: List[str] = [], preferences: Dict = {},
-                 extension_paths: List[str] = [], binary_path: str = None, disable_bot_detection_flag: bool = False) -> None:
+                 extension_paths: List[str] = [], binary_path: str = None, disable_bot_detection_flag: bool = False, debug_mode=False) -> None:
         self.arguments = arguments
         self.preferences = preferences
         self.extension_paths = extension_paths
         self.binary_path = binary_path
         self.disable_bot_detection_flag = disable_bot_detection_flag
+        self.debug_mode = debug_mode
 
     def disable_bot_detection(self, options):
         try:
@@ -53,13 +54,15 @@ class ChromeOptions(BrowserOptions):
                 options.binary_location = self.binary_path
             if self.disable_bot_detection_flag:
                 options = self.disable_bot_detection(options)
+            if self.debug_mode:
+                options.add_experimental_option("detach", True)
             options.set_capability(
                 "loggingPrefs", {'performance': 'ALL', 'browser': 'ALL'})
             options.set_capability("goog:loggingPrefs", {
                                    'performance': 'ALL', 'browser': 'ALL'})
             options.add_experimental_option("prefs", self.preferences)
             self.options = options
-            return options
+            return self.options
         except Exception as err:
             print(err)
 
@@ -79,6 +82,6 @@ class FirefoxOptions(BrowserOptions):
             for ext_path in self.extension_paths:
                 options.add_extension(ext_path)
             self.options = options
-            return options
+            return self.options
         except Exception as err:
             print(err)
