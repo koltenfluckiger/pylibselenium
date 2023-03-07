@@ -7,7 +7,6 @@ except ImportError as err:
 
 from selenium.webdriver.chrome.options import Options as ChromeOption
 from selenium.webdriver.firefox.options import Options as FirefoxOption
-from selenium.webdriver.safari.options import Options as SafariOption
 
 
 class BrowserOptions(ABC):
