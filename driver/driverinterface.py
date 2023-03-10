@@ -1,6 +1,7 @@
 from pylibseleniummanagement.driver.options import *
 from .services import BrowserService
 from .options import BrowserOptions
+import traceback
 try:
     import os
     from abc import ABC
@@ -22,8 +23,12 @@ class Chrome(DriverInterface):
         self.options = options
 
     def factory(self) -> object:
-        return webdriver.Chrome(service=self.service,
-                                options=self.options)
+        try:
+            return webdriver.Chrome(service=self.service,
+                                    options=self.options)
+        except Exception as err:
+            traceback.print_exc()
+
 
 
 class Firefox(DriverInterface):
@@ -36,8 +41,7 @@ class Firefox(DriverInterface):
         try:
             return webdriver.Firefox(service=self.service, options=self.options)
         except Exception as err:
-            print(f"HERE {err}")
-            raise Exception(err)
+            traceback.print_exc()
 
 
 class Safari(DriverInterface):
@@ -50,4 +54,16 @@ class Safari(DriverInterface):
         try:
             return webdriver.Safari(executable_path=self.executable_path, service_args=self.service_args)
         except Exception as err:
-            print(err)
+            traceback.print_exc()
+
+class RemoteWebdriver(DriverInterface):
+    
+    def __init__(self, remote_url: str, options: BrowserOptions) -> None:
+        self.remote_url = remote_url
+        self.options = options
+
+    def factory(self) -> object:
+        try:
+            return webdriver.Remote(command_executor=self.remote_url, options=self.options)
+        except Exception as err:
+            traceback.print_exc()
