@@ -55,11 +55,13 @@ class DriverClient(object):
     def __del__(self) -> None:
         try:
             if self.debug_mode == False:
+                self.driver.quit()
                 self._kill_processes()
                 self.driver = None
             elif (self.debug_mode == False) and (self.delete_profile == True):
                 self._kill_processes()
                 self._delete_profile()
+                self.driver.quit()
                 self.driver = None
         except Exception as err:
             pass
