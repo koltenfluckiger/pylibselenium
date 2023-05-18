@@ -1,7 +1,7 @@
 from .delayer import DelayerMetaClass, delayed_function
 import traceback
 from .driverinterface import DriverInterface
-from .wait import window_handle_to_be_available, wait_for_element_ready_state, window_handle_to_be_available_switch_close_previous, wait_element_to_be_clickable, wait_for_value_to_change, wait_for_html_load_after_click, wait_for_html_load_after_click_element, wait_for_load_after_click, wait_for_keys_verification
+from .wait import window_handle_to_be_available, wait_for_element_ready_state, window_handle_to_be_available_switch_close_previous, wait_element_to_be_clickable, wait_for_value_to_change, wait_for_html_load_after_click, wait_for_html_load_after_click_element, wait_for_load_after_click, wait_for_keys_verification, wait_for_keys_verification_with_delay
 from .types import MODIFERKEYS, DROPDOWNTYPE
 try:
     from enum import Enum
@@ -241,6 +241,24 @@ class DriverClient(object):
             self.check_throw(
                 Error("ERROR: {}".format(err)))
 
+    def press_modifer_key_send_keys_on_element(self, element: WebElement, modifer_key: MODIFERKEYS, keys: Any = "") -> None:
+        try:
+            action = ActionChains(self.driver)
+            action.key_down(modifer_key).send_keys(keys).key_up(modifer_key)
+            action.perform()
+        except Exception as err:
+            self.check_throw(
+                Error("ERROR: {}".format(err)))
+
+    def press_modifer_key_on_element(self, element: WebElement,  modifer_key: MODIFERKEYS) -> None:
+        try:
+            action = ActionChains(self.driver)
+            action.key_down(modifer_key, element).key_up(modifer_key, element)
+            action.perform()
+        except Exception as err:
+            self.check_throw(
+                Error("ERROR: {}".format(err)))
+
     def get_current_iframe(self):
         try:
             current_frame = self.execute_script("self.name")
@@ -279,6 +297,13 @@ class DriverClient(object):
         except Exception as err:
             self.check_throw(Error("Failed to find element: {}".format(xpath)))
 
+    def get_element_by_tag_name(self, tag: str) -> WebElement:
+        try:
+            element = self.driver.find_element(By.TAG_NAME, tag)
+            return element
+        except Exception as err:
+            traceback.print_exc()
+
     def get_child_element(self, element: WebElement, xpath: str) -> WebElement:
         try:
             c_element = element.find_element(By.XPATH, xpath)
@@ -299,14 +324,40 @@ class DriverClient(object):
             self.check_throw(
                 Error("Failed to find element: {} and send keys: {}".format(xpath, keys)))
 
-    def find_and_click_send_modifer_key(self, xpath: str, key: Any) -> None:
+    def find_and_send_modifer_key(self, element: WebElement, modifier_key: Any) -> None:
+        try:
+            WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                EC.presence_of_element_located(element))
+
+            element.send_keys(key)
+        except Exception as err:
+            self.check_throw(
+                Error("Failed to find element: {} and send keys: {}".format(xpath, keys)))
+
+    def send_modifer_key(self, modifier_key) -> None:
+        try:
+            action = ActionChains(self.driver)
+            action.key_down(modifier_key).key_up(modifier_key)
+            action.perform()
+        except Exception as err:
+            traceback.print_exc()
+
+    def send_modifer_key_to_window(self, window, modifier_key) -> None:
+        try:
+            action = ActionChains(self.driver)
+            action.key_down(modifier_key, window).key_up(modifier_key, window)
+            action.perform()
+        except Exception as err:
+            traceback.print_exc()
+
+    def find_and_click_send_modifer_key(self, xpath: str, modifer_key: Any, keys: Any) -> None:
         try:
             WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
                 EC.presence_of_element_located((By.XPATH, xpath)))
             element = WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
                 EC.element_to_be_clickable((By.XPATH, xpath)))
             element.click()
-            element.send_keys(key)
+            self.press_modifer_key_send_keys(modifer_key, keys)
         except Exception as err:
             self.check_throw(
                 Error("Failed to find element: {} and send keys: {}".format(xpath, keys)))
@@ -317,6 +368,16 @@ class DriverClient(object):
                 EC.element_to_be_clickable((By.XPATH, xpath)))
             WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
                 wait_for_keys_verification((By.XPATH, xpath), keys))
+        except Exception as err:
+            self.check_throw(
+                Error("Failed to find element: {} and send keys: {}".format(xpath, keys)))
+
+    def find_and_send_keys_with_delay(self, xpath: str, keys: Any, delay=1) -> None:
+        try:
+            WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                EC.element_to_be_clickable((By.XPATH, xpath)))
+            WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                wait_for_keys_verification_with_delay((By.XPATH, xpath), keys, delay=1))
         except Exception as err:
             self.check_throw(
                 Error("Failed to find element: {} and send keys: {}".format(xpath, keys)))

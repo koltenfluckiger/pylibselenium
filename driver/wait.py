@@ -1,5 +1,7 @@
 try:
     from time import sleep
+    from selenium.webdriver.common.action_chains import ActionChains
+    import random
 except ImportError as err:
     print("Unable to import: {}".format(err))
     exit()
@@ -181,6 +183,34 @@ class wait_for_keys_verification(object):
             element.click()
             element.clear()
             element.send_keys(self.keys)
+            value = str(element.get_property("value"))
+            if value == self.keys:
+                return True
+            else:
+                return False
+        except Exception as err:
+            return False
+
+
+class wait_for_keys_verification_with_delay(object):
+
+    def __init__(self, locator, keys, delay):
+        self.locator = locator
+        self.keys_list = keys
+        self.keys = keys
+        self.delay = delay
+
+    def __call__(self, driver):
+        try:
+            element = driver.find_element(*self.locator)
+            element.click()
+            element.clear()
+            for key in self.keys_list:
+                action = ActionChains(driver)
+                action.key_down(key)
+                action.pause(random.uniform(0, 500) / 1000)
+                action.key_up(key)
+                action.perform()
             value = str(element.get_property("value"))
             if value == self.keys:
                 return True
