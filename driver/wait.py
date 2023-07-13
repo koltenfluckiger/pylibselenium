@@ -7,6 +7,22 @@ except ImportError as err:
     exit()
 
 
+class presence_of_all_elements_located_if_not_empty(object):
+
+    def __init__(self, locator):
+        self.locator = locator
+
+    def __call__(self, driver):
+        try:
+            elements = driver.find_elements(*self.locator)
+            if elements:
+                return elements
+            else:
+                return True
+        except Exception as err:
+            return True
+
+
 class window_handle_to_be_available(object):
 
     def __init__(self, index):
@@ -58,9 +74,6 @@ class window_handle_to_be_available_switch_close_previous(object):
                 return False
         except Exception as err:
             return False
-
-# Added this wait condition as sometimes selenium will click the element
-# before the DOM is responsive.
 
 
 class wait_element_to_be_clickable(object):

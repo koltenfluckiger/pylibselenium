@@ -1,7 +1,7 @@
 from .delayer import DelayerMetaClass, delayed_function
 import traceback
 from .driverinterface import DriverInterface
-from .wait import window_handle_to_be_available, wait_for_element_ready_state, window_handle_to_be_available_switch_close_previous, wait_element_to_be_clickable, wait_for_value_to_change, wait_for_html_load_after_click, wait_for_html_load_after_click_element, wait_for_load_after_click, wait_for_keys_verification, wait_for_keys_verification_with_delay
+from .wait import *
 from .types import MODIFERKEYS, DROPDOWNTYPE
 try:
     from enum import Enum
@@ -285,6 +285,15 @@ class DriverClient(object):
             elements = WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
                 EC.presence_of_all_elements_located((By.XPATH, xpath)))
             return elements
+        except Exception as err:
+            self.check_throw(
+                Error("Failed to find elements: {}".format(xpath)))
+
+    def get_elements_until_none(self, xpath: str) -> WebElement:
+        try:
+            elements = WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                presence_of_all_elements_located_if_not_empty((By.XPATH, xpath)))
+            return elements if type(elements) == list else False
         except Exception as err:
             self.check_throw(
                 Error("Failed to find elements: {}".format(xpath)))

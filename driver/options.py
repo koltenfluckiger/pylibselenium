@@ -55,8 +55,6 @@ class ChromeOptions(BrowserOptions):
                 options = self.disable_bot_detection(options)
             if self.debug_mode:
                 options.add_experimental_option("detach", True)
-            options.set_capability(
-                "loggingPrefs", {'performance': 'ALL', 'browser': 'ALL'})
             options.set_capability("goog:loggingPrefs", {
                                    'performance': 'ALL', 'browser': 'ALL'})
             options.add_experimental_option("prefs", self.preferences)
