@@ -306,6 +306,14 @@ class DriverClient(object):
         except Exception as err:
             self.check_throw(Error("Failed to find element: {}".format(xpath)))
 
+    def try_to_get_element(self, xpath: str) -> WebElement:
+        try:
+            element = WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                EC.element_to_be_clickable((By.XPATH, xpath)))
+            return element
+        except Exception as err:
+            return False
+
     def get_element_by_tag_name(self, tag: str) -> WebElement:
         try:
             element = self.driver.find_element(By.TAG_NAME, tag)
@@ -442,6 +450,18 @@ class DriverClient(object):
             action.move_to_element(element)
             action.click(element)
             action.perform()
+
+        except Exception as err:
+            self.check_throw(Error(
+                "Failed to find element: {} and click.".format(element)))
+
+    def try_to_click_element(self, element: WebElement) -> None:
+        try:
+            if element:
+                action = ActionChains(self.driver)
+                action.move_to_element(element)
+                action.click(element)
+                action.perform()
 
         except Exception as err:
             self.check_throw(Error(
