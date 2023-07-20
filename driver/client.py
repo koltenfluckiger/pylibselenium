@@ -528,7 +528,16 @@ class DriverClient(object):
             print(err)
             self.check_throw(
                 Error("Failed to find element: {} and click.".format(xpath)))
-
+            
+    def click_and_wait_for_element(self, xpath: str, xpath2: str):
+        try:
+            WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                wait_for_element_after_click((By.XPATH, xpath), (By.XPATH, xpath2)))
+        except Exception as err:
+            print(err)
+            self.check_throw(
+                Error("Failed to find element: {} and click.".format(xpath)))
+            
     def click_and_wait_for_html_load(self, xpath: str):
         try:
             WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(

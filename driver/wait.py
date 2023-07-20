@@ -183,6 +183,32 @@ class wait_for_load_after_click(object):
         except Exception as err:
             return True
 
+class wait_for_element_after_click(object):
+
+    def __init__(self, locator, waited_locator):
+        self.locator = locator
+        self.waited_locator = waited_locator
+        self.clicked = False
+
+    def __call__(self, driver):
+        try:
+            element = driver.find_element(*self.locator)
+            if element and self.clicked == False:
+                element.click()
+                self.clicked = True
+                waited_element = driver.find_element(*self.waited_locator)
+                if waited_element:
+                    return True
+                else:
+                    return False
+            else:
+                waited_element = driver.find_element(*self.waited_locator)
+                if waited_element:
+                    return True
+                else:
+                    return False
+        except Exception as err:
+            return True
 
 class wait_for_keys_verification(object):
 
