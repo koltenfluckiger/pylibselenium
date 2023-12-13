@@ -1,29 +1,31 @@
-from .delayer import DelayerMetaClass, delayed_function
 import traceback
+
+from .delayer import DelayerMetaClass, delayed_function
 from .driverinterface import DriverInterface
+from .types import DROPDOWNTYPE, MODIFERKEYS
 from .wait import *
-from .types import MODIFERKEYS, DROPDOWNTYPE
+
 try:
+    import logging
+    import os
+    import pathlib
+    import re
+    import shutil
+    import signal
     from enum import Enum
+    from pathlib import Path, PurePath
+    from platform import platform
+    from time import sleep
     from typing import Any, List
+
+    import psutil
+    from psutil import Process
     from selenium.webdriver.common.action_chains import ActionChains
     from selenium.webdriver.common.by import By
     from selenium.webdriver.common.keys import Keys
     from selenium.webdriver.remote.webelement import WebElement
     from selenium.webdriver.support import expected_conditions as EC
-    from selenium.webdriver.support.ui import WebDriverWait
-    from selenium.webdriver.support.ui import Select
-    from time import sleep
-    import signal
-    import os
-    from platform import platform
-    import shutil
-    import psutil
-    from psutil import Process
-    import re
-    import pathlib
-    from pathlib import PurePath, Path
-    import logging
+    from selenium.webdriver.support.ui import Select, WebDriverWait
 except ImportError as err:
     print("Unable to import: {}".format(err))
     exit()
@@ -40,6 +42,55 @@ class Error(Exception):
 class DriverClient(object):
 
     def __init__(self, driver: DriverInterface, poll_time: int = 10, poll_frequency: int = 1, scroll_pause_time: int = 5, debug_mode: bool = False, throw: bool = False, delete_profile: bool = False, close_previous_sessions: bool = False, action_delay: int = 0, disable_bot_detection_flag: bool = False) -> None:
+        """
+        A client to interact with and manipulate web pages using Selenium.
+
+        Parameters
+        ----------
+        driver : DriverInterface
+            A Selenium WebDriver instance to interface with the browser.
+        poll_time : int, optional
+            Maximum time, in seconds, that the driver should wait when trying to find an element or elements if they are not immediately available, by default 10.
+        poll_frequency : int, optional
+            Sleep interval between calls, in seconds, by default 1.
+        scroll_pause_time : int, optional
+            Pause time, in seconds, between scroll actions, by default 5.
+        debug_mode : bool, optional
+            If True, the driver won't quit when the instance is deleted, by default False.
+        throw : bool, optional
+            If True, the class will raise exceptions, otherwise, it will only log them, by default False.
+        delete_profile : bool, optional
+            If True, the user profile used during the session will be deleted upon closing the driver, by default False.
+        close_previous_sessions : bool, optional
+            If True, previous sessions will be closed upon starting a new one, by default False.
+        action_delay : int, optional
+            A delay, in seconds, to wait between consecutive actions, by default 0.
+        disable_bot_detection_flag : bool, optional
+            If True, executes various commands to obfuscate the webdriver, by default False.
+
+        Attributes
+        ----------
+        close_previous_sessions : bool
+            If True, previous sessions will be closed upon starting a new one.
+        debug_mode : bool
+            If True, the driver won't quit when the instance is deleted.
+        delete_profile : bool
+            If True, the user profile used during the session will be deleted upon closing the driver.
+        driver : DriverInterface
+            A Selenium WebDriver instance to interface with the browser.
+        poll_frequency : int
+            Sleep interval between calls, in seconds.
+        poll_time : int
+            Maximum time, in seconds, that the driver should wait when trying to find an element or elements if they are not immediately available.
+        scroll_pause_time : int
+            Pause time, in seconds, between scroll actions.
+        throw : bool
+            If True, the class will raise exceptions, otherwise, it will only log them.
+        action_delay : int
+            A delay, in seconds, to wait between consecutive actions.
+        disable_bot_detection_flag : bool
+            If True, executes various commands to obfuscate the webdriver.
+        """
         self.close_previous_sessions = close_previous_sessions
         self.debug_mode = debug_mode
         self.delete_profile = delete_profile
@@ -53,6 +104,7 @@ class DriverClient(object):
         self.__setup()
 
     def __del__(self) -> None:
+
         try:
             if self.debug_mode == False:
                 self.driver.quit()
@@ -67,6 +119,12 @@ class DriverClient(object):
             pass
 
     def _kill_processes(self):
+        """
+        Kill all processes associated with the driver's service.
+
+        This method attempts to terminate all child processes spawned by the driver's service. 
+        It does not raise exceptions but logs them if they occur.
+        """
         try:
             if self.driver.service.process.pid:
                 pid = self.driver.service.process.pid
@@ -528,7 +586,7 @@ class DriverClient(object):
             print(err)
             self.check_throw(
                 Error("Failed to find element: {} and click.".format(xpath)))
-            
+
     def click_and_wait_for_element(self, xpath: str, xpath2: str):
         try:
             WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
@@ -537,7 +595,7 @@ class DriverClient(object):
             print(err)
             self.check_throw(
                 Error("Failed to find element: {} and click.".format(xpath)))
-            
+
     def click_and_wait_for_html_load(self, xpath: str):
         try:
             WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(

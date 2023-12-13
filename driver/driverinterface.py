@@ -1,10 +1,14 @@
-from pylibseleniummanagement.driver.options import *
-from .services import BrowserService
-from .options import BrowserOptions
 import traceback
+
+from pylibseleniummanagement.driver.options import *
+
+from .options import BrowserOptions
+from .services import BrowserService
+
 try:
     import os
     from abc import ABC
+
     from selenium import webdriver
 except ImportError as err:
     print("Unable to import: {}".format(err))
@@ -28,7 +32,6 @@ class Chrome(DriverInterface):
                                     options=self.options)
         except Exception as err:
             traceback.print_exc()
-
 
 
 class Firefox(DriverInterface):
@@ -56,9 +59,10 @@ class Safari(DriverInterface):
         except Exception as err:
             traceback.print_exc()
 
+
 class RemoteWebdriver(DriverInterface):
-    
-    def __init__(self, remote_url: str, options: BrowserOptions, keep_alive:bool=False) -> None:
+
+    def __init__(self, remote_url: str, options: BrowserOptions = ChromeOptions(), keep_alive: bool = False) -> None:
         self.remote_url = remote_url
         self.options = options
         self.keep_alive = keep_alive
