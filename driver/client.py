@@ -1,6 +1,7 @@
 import contextlib
 import traceback
 
+from ..dom import CachedElement, LocatedWebElement
 from .delayer import DelayerMetaClass, delayed_function
 from .driverinterface import DriverInterface
 from .types import DROPDOWNTYPE, MODIFERKEYS
@@ -32,6 +33,7 @@ except ImportError as err:
 
 TEMP_DIR = pathlib.Path(
     os.getenv("TEMP") or "/tmp").joinpath("pylibseleniummanagement.log").resolve()
+
 logging.basicConfig(filename=TEMP_DIR)
 
 
@@ -104,6 +106,7 @@ class DriverClient(object):
         self.action_delay = action_delay
         self.disable_bot_detection_flag = disable_bot_detection_flag
         self.__setup()
+
     def __del__(self) -> None:
 
         with contextlib.suppress(Exception):
@@ -137,6 +140,7 @@ class DriverClient(object):
             elif browser_name == 'firefox':
                 data_dir = self.driver.capabilities['moz:profile']
             shutil.rmtree(Path(data_dir).resolve())
+
     def __setup(self):
         try:
             os_platform = {
@@ -194,7 +198,7 @@ class DriverClient(object):
 
     def check_throw(self, error: Error) -> None:
         logging.critical(error)
-        traceback.print_exc(error)
+        traceback.print_exception(error)
         if self.throw:
             raise error
         else:
@@ -472,7 +476,7 @@ class DriverClient(object):
         except Exception as err:
             self.check_throw(Error(f"ERROR: {err}"))
 
-    def get_elements(self, xpath: str) -> WebElement:
+    def get_elements(self, xpath: str) -> list[LocatedWebElement | CachedElement]:
         """
         Presses and releases a modifier key on a specific element.
 
@@ -485,16 +489,24 @@ class DriverClient(object):
         """
 
         try:
-
+            # Wait for all elements located by XPath to be present
             elements = WebDriverWait(
                 self.driver, self.poll_time, poll_frequency=self.poll_frequency
             ).until(EC.presence_of_all_elements_located((By.XPATH, xpath)))
 
-            for element in elements:
+            # Wrap each element in the LocatedElement class
+            wrapped_elements = [
+                LocatedWebElement(self.driver, element.id, (By.XPATH, xpath)) for element in elements
+            ]
+
+            # Ensure each element is clickable
+            for element in wrapped_elements:
                 WebDriverWait(
                     self.driver, self.poll_time, poll_frequency=self.poll_frequency
                 ).until(EC.element_to_be_clickable(element))
-            return elements
+
+            return wrapped_elements
+
         except Exception as err:
             self.check_throw(Error(f"Failed to find elements: {xpath}"))
 
@@ -896,8 +908,6 @@ class DriverClient(object):
     def click_and_wait_for_html_load(self, xpath: str):
         try:
             WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
-                WaitForLoadAfterClick((By.XPATH, xpath)))
-            WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
                 WaitForHtmlLoadAfterClick((By.XPATH, xpath)))
         except Exception as err:
             print(err)
@@ -937,6 +947,7 @@ class DriverClient(object):
             WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
                 WaitForElementToBeStale((By.XPATH, xpath), wait))
         except Exception as err:
+            print()
             self.check_throw(
                 Error(f"Failed to find element: {xpath} and click."))
 

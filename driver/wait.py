@@ -3,6 +3,7 @@ import random
 from time import sleep
 
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
@@ -19,9 +20,8 @@ class PresenceOfAllElementsLocatedIfNotEmpty:
     def __call__(self, driver):
         try:
             elements = driver.find_elements(*self.locator)
-            return elements if elements else False
+            return elements or False
         except Exception as err:
-            logging.error(f"Error locating elements: {err}")
             return False
 
 
@@ -34,14 +34,11 @@ class WaitForElementToBeStale:
 
     def __call__(self, driver):
         try:
-            WebDriverWait(driver, self.wait).until(
-                EC.presence_of_element_located(*self.locator))
-
-            return WebDriverWait(driver, self.wait).until(
-                EC.staleness_of(*self.locator))
-        except Exception as err:
-            logging.error(f"Error waiting for element to be stale: {err}")
+            driver.find_element(*self.locator)
+            sleep(self.wait)
             return False
+        except Exception as err:
+            return True
 
 
 class WindowHandleToBeAvailable:
@@ -56,7 +53,6 @@ class WindowHandleToBeAvailable:
         except IndexError:
             return False
         except Exception as err:
-            logging.error(f"Error checking window handle availability: {err}")
             return False
 
 
@@ -72,7 +68,6 @@ class WaitForElementReadyState:
             ready_state = driver.execute_script("return document.readyState")
             return element if ready_state == "complete" else False
         except Exception as err:
-            logging.error(f"Error waiting for element ready state: {err}")
             return False
 
 
@@ -92,7 +87,6 @@ class WindowHandleToBeAvailableSwitchClosePrevious:
         except IndexError:
             return False
         except Exception as err:
-            logging.error(f"Error switching window handles: {err}")
             return False
 
 
@@ -111,7 +105,6 @@ class WaitElementToBeClickable:
             element.click()
             return True
         except Exception as err:
-            logging.error(f"Error waiting for element to be clickable: {err}")
             return False
 
 
@@ -130,7 +123,6 @@ class WaitForValueToChange:
                 return False
             return self.previous_text != element.text
         except Exception as err:
-            logging.error(f"Error waiting for value to change: {err}")
             return False
 
 
@@ -153,21 +145,17 @@ class WaitForHtmlLoadAfterClick:
     def __init__(self, locator):
         self.locator = locator
         self.clicked = False
-        self.html_id = None
 
     def __call__(self, driver):
         try:
             element = driver.find_element(*self.locator)
-            current_html_id = driver.find_element_by_xpath('html').id
             if not self.clicked:
-                self.html_id = current_html_id
                 element.click()
                 self.clicked = True
                 return False
-            return self.html_id != current_html_id
-        except Exception as err:
-            logging.error(f"Error waiting for HTML load after click: {err}")
             return False
+        except Exception as err:
+            return True
 
 
 class WaitForHtmlLoadAfterClickElement:
@@ -176,20 +164,15 @@ class WaitForHtmlLoadAfterClickElement:
     def __init__(self, element):
         self.element = element
         self.clicked = False
-        self.html_id = None
 
     def __call__(self, driver):
         try:
-            current_html_id = driver.find_element_by_xpath('html').id
             if not self.clicked:
-                self.html_id = current_html_id
                 self.element.click()
                 self.clicked = True
                 return False
-            return self.html_id != current_html_id
+            return not self.element.is_enabled()
         except Exception as err:
-            logging.error(
-                f"Error waiting for HTML load after element click: {err}")
             return False
 
 
