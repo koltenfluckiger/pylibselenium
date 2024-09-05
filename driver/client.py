@@ -20,10 +20,8 @@ try:
     from typing import Any
 
     import psutil
-    from psutil import Process
     from selenium.webdriver.common.action_chains import ActionChains
     from selenium.webdriver.common.by import By
-    from selenium.webdriver.common.keys import Keys
     from selenium.webdriver.remote.webelement import WebElement
     from selenium.webdriver.support import expected_conditions as EC
     from selenium.webdriver.support.ui import Select, WebDriverWait
@@ -218,7 +216,7 @@ class DriverClient(object):
         try:
             self.driver.maximize_window()
         except Exception as err:
-            self.check_throw(Error(f"ERROR: {err}"))
+            self.check_throw(Error(f"ERROR: {err}."))
 
     def close(self) -> None:
         """
@@ -235,7 +233,7 @@ class DriverClient(object):
         try:
             self.driver.close()
         except Exception as err:
-            self.check_throw(Error(f"ERROR: {err}"))
+            self.check_throw(Error(f"ERROR: {err}."))
 
     def quit(self) -> None:
         """
@@ -247,7 +245,7 @@ class DriverClient(object):
         try:
             self.driver.quit()
         except Exception as err:
-            self.check_throw(Error(f"ERROR: {err}"))
+            self.check_throw(Error(f"ERROR: {err}."))
 
     def go(self, url: str) -> None:
         """
@@ -263,7 +261,7 @@ class DriverClient(object):
         try:
             self.driver.get(url)
         except Exception as err:
-            self.check_throw(Error(f"ERROR: {err}"))
+            self.check_throw(Error(f"ERROR: {err}."))
 
     def reload(self) -> None:
         """
@@ -276,7 +274,7 @@ class DriverClient(object):
         try:
             self.driver.refresh()
         except Exception as err:
-            self.check_throw(Error(f"ERROR: {err}"))
+            self.check_throw(Error(f"ERROR: {err}."))
 
     def scroll_to_top(self) -> None:
         """
@@ -289,7 +287,7 @@ class DriverClient(object):
         try:
             self.execute_script("window.scrollTo(0, 0);")
         except Exception as err:
-            self.check_throw(Error(f"ERROR: {err}"))
+            self.check_throw(Error(f"ERROR: {err}."))
 
     def scroll_to_bottom(self, times: int) -> None:
         """
@@ -315,7 +313,7 @@ class DriverClient(object):
                     break
                 browser_height = new_browser_height
         except Exception as err:
-            self.check_throw(Error(f"ERROR: {err}"))
+            self.check_throw(Error(f"ERROR: {err}."))
 
     def open_new_tab(self) -> None:
         """
@@ -328,7 +326,7 @@ class DriverClient(object):
         try:
             self.execute_script("window.open();")
         except Exception as err:
-            self.check_throw(Error(f"ERROR: {err}"))
+            self.check_throw(Error(f"ERROR: {err}."))
 
     def open_new_tab_go(self, url: str) -> None:
         """
@@ -347,7 +345,7 @@ class DriverClient(object):
                     url}'"
             )
         except Exception as err:
-            self.check_throw(Error(f"Unable to open new tab to {url}"))
+            self.check_throw(Error(f"Unable to open new tab to {url}. Error:{err}"))
 
     def get_current_iframe(self):
         """
@@ -363,7 +361,7 @@ class DriverClient(object):
         try:
             return self.execute_script("self.name")
         except Exception as err:
-            self.check_throw(Error(f"ERROR: {err}"))
+            self.check_throw(Error(f"ERROR: {err}."))
 
     def switch_to_iframe(self, iframe: WebElement) -> None:
         """
@@ -379,7 +377,7 @@ class DriverClient(object):
         try:
             self.driver.switch_to.frame(iframe)
         except Exception as err:
-            self.check_throw(Error(f"ERROR: {err}"))
+            self.check_throw(Error(f"ERROR: {err}."))
 
     def switch_to_default_iframe(self) -> None:
         """
@@ -392,7 +390,7 @@ class DriverClient(object):
         try:
             self.driver.switch_to.default_content()
         except Exception as err:
-            self.check_throw(Error(f"ERROR: {err}"))
+            self.check_throw(Error(f"ERROR: {err}."))
 
     ## ELEMENT FUNCTIONS ##
 
@@ -414,7 +412,7 @@ class DriverClient(object):
             action.key_down(modifer_key).send_keys(keys).key_up(modifer_key)
             action.perform()
         except Exception as err:
-            self.check_throw(Error(f"ERROR: {err}"))
+            self.check_throw(Error(f"ERROR: {err}."))
 
     def press_modifer_key(self, modifer_key: MODIFERKEYS) -> None:
         """
@@ -432,7 +430,7 @@ class DriverClient(object):
             action.key_down(modifer_key).key_up(modifer_key)
             action.perform()
         except Exception as err:
-            self.check_throw(Error(f"ERROR: {err}"))
+            self.check_throw(Error(f"ERROR: {err}."))
 
     def press_modifer_key_send_keys_on_element(
             self, element: WebElement, modifer_key: MODIFERKEYS, keys: Any = "") -> None:
@@ -454,7 +452,7 @@ class DriverClient(object):
                 keys, element).key_up(modifer_key, element)
             action.perform()
         except Exception as err:
-            self.check_throw(Error(f"ERROR: {err}"))
+            self.check_throw(Error(f"ERROR: {err}."))
 
     def press_modifer_key_on_element(
             self, element: WebElement, modifer_key: MODIFERKEYS) -> None:
@@ -474,7 +472,7 @@ class DriverClient(object):
             action.key_down(modifer_key, element).key_up(modifer_key, element)
             action.perform()
         except Exception as err:
-            self.check_throw(Error(f"ERROR: {err}"))
+            self.check_throw(Error(f"ERROR: {err}."))
 
     def get_elements(self, xpath: str) -> list[LocatedWebElement | CachedElement]:
         """
@@ -492,7 +490,7 @@ class DriverClient(object):
             # Wait for all elements located by XPath to be present
             elements = WebDriverWait(
                 self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(EC.presence_of_all_elements_located((By.XPATH, xpath)))
+            ).until(EC.visibility_of_all_elements_located((By.XPATH, xpath)))
 
             # Wrap each element in the LocatedElement class
             wrapped_elements = [
@@ -504,11 +502,13 @@ class DriverClient(object):
                 WebDriverWait(
                     self.driver, self.poll_time, poll_frequency=self.poll_frequency
                 ).until(EC.element_to_be_clickable(element))
-
+            print(wrapped_elements)
             return wrapped_elements
 
         except Exception as err:
-            self.check_throw(Error(f"Failed to find elements: {xpath}"))
+            self.check_throw(
+                Error(
+                    f"Failed to find elements: {xpath}. Error:{err}"))
 
     def get_elements_until_none(self, xpath: str) -> WebElement:
         """
@@ -529,7 +529,7 @@ class DriverClient(object):
                 PresenceOfAllElementsLocatedIfNotEmpty((By.XPATH, xpath)))
             return elements if type(elements) == list else False
         except Exception as err:
-            self.check_throw(Error(f"Failed to find elements: {xpath}"))
+            self.check_throw(Error(f"Failed to find elements: {xpath}. Error:{err}"))
 
     def get_element_relative(
             self, parent_element: WebElement, xpath: str) -> WebElement:
@@ -547,7 +547,7 @@ class DriverClient(object):
             return parent_element.find_element(By.XPATH, xpath)
         except Exception as err:
             self.check_throw(
-                Error(f"Failed to find relative element: {xpath}"))
+                Error(f"Failed to find relative element: {xpath}. Error:{err}"))
             return None
 
     def get_element(self, xpath: str) -> WebElement:
@@ -566,7 +566,7 @@ class DriverClient(object):
                 self.driver, self.poll_time, poll_frequency=self.poll_frequency
             ).until(EC.element_to_be_clickable((By.XPATH, xpath)))
         except Exception as err:
-            self.check_throw(Error(f"Failed to find element: {xpath}"))
+            self.check_throw(Error(f"Failed to find element: {xpath}. Error:{err}"))
 
     def try_to_get_element(self, xpath: str) -> WebElement:
         """
@@ -626,7 +626,7 @@ class DriverClient(object):
                 self.driver, self.poll_time, poll_frequency=self.poll_frequency
             ).until(EC.element_to_be_clickable(c_element))
         except Exception as err:
-            self.check_throw(Error(f"Failed to find element: {xpath}"))
+            self.check_throw(Error(f"Failed to find element: {xpath}. Error:{err}"))
 
     def find_and_send_modifer_key(self, xpath: str, key: Any) -> None:
         """
@@ -1054,7 +1054,7 @@ class DriverClient(object):
         try:
             return self.driver.window_handles[index]
         except Exception as err:
-            self.check_throw(Error(f"ERROR: {err}"))
+            self.check_throw(Error(f"ERROR: {err}."))
 
     def switch_to_latest_window(self) -> None:
         try:
@@ -1062,26 +1062,26 @@ class DriverClient(object):
                 WindowHandleToBeAvailable(len(self.driver.window_handles) - 1))
             self.driver.switch_to.window(window)
         except Exception as err:
-            self.check_throw(Error(f"ERROR: {err}"))
+            self.check_throw(Error(f"ERROR: {err}."))
 
     def switch_to_first_window(self) -> None:
         try:
             first_window_index = self.driver.window_handles[0]
             self.driver.switch_to.window(first_window_index)
         except Exception as err:
-            self.check_throw(Error(f"ERROR: {err}"))
+            self.check_throw(Error(f"ERROR: {err}."))
 
     def close_current_window(self) -> None:
         try:
             self.driver.close()
         except Exception as err:
-            self.check_throw(Error(f"ERROR: {err}"))
+            self.check_throw(Error(f"ERROR: {err}."))
 
     def switch_to_parent_frame(self) -> None:
         try:
             self.driver.switch_to.parent_frame()
         except Exception as err:
-            self.check_throw(Error(f"ERROR: {err}"))
+            self.check_throw(Error(f"ERROR: {err}."))
 
     def check_element_for_value_change(self, xpath: str, forever=False):
         if forever:
@@ -1092,13 +1092,13 @@ class DriverClient(object):
                         WaitForValueToChange((By.XPATH, xpath)))
                     value_changed = not True
                 except Exception as err:
-                    self.check_throw(Error(f"ERROR: {err}"))
+                    self.check_throw(Error(f"ERROR: {err}."))
         else:
             try:
                 WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
                     WaitForValueToChange((By.XPATH, xpath)))
             except Exception as err:
-                self.check_throw(Error(f"ERROR: {err}"))
+                self.check_throw(Error(f"ERROR: {err}."))
 
     def check_node_css_property(
             self, xpath: str, property: str, search: str, value: str, return_value=False) -> Any:
@@ -1115,7 +1115,7 @@ class DriverClient(object):
                 return match_str if return_value else True
             return element_property if return_value else False
         except Exception as err:
-            self.check_throw(Error(f"ERROR: {err}"))
+            self.check_throw(Error(f"ERROR: {err}."))
 
     def execute_script(self, script: str, return_value=False,
                        node: WebElement = None) -> Any:
@@ -1125,7 +1125,7 @@ class DriverClient(object):
             else:
                 self.driver.execute_script(script)
         except Exception as err:
-            self.check_throw(Error(f"ERROR: {err}"))
+            self.check_throw(Error(f"ERROR: {err}."))
 
     def execute_async_script(self, script: str, return_value=False) -> Any:
         try:
@@ -1134,7 +1134,7 @@ class DriverClient(object):
             else:
                 self.driver.execute_async_script(script)
         except Exception as err:
-            self.check_throw(Error(f"ERROR: {err}"))
+            self.check_throw(Error(f"ERROR: {err}."))
 
     def get_text_from_node_convert(self, xpath: str, ctype: Any) -> Any:
         try:
@@ -1142,7 +1142,7 @@ class DriverClient(object):
                 EC.element_to_be_clickable((By.XPATH, xpath)))
             return ctype(element.text)
         except Exception as err:
-            self.check_throw(Error(f"ERROR: {err}"))
+            self.check_throw(Error(f"ERROR: {err}."))
 
     def get_text_from_node(self, xpath: str) -> str:
         try:
@@ -1150,7 +1150,7 @@ class DriverClient(object):
                 EC.element_to_be_clickable((By.XPATH, xpath)))
             return element.text
         except Exception as err:
-            self.check_throw(Error(f"ERROR: {err}"))
+            self.check_throw(Error(f"ERROR: {err}."))
 
     def get_text_from_node_element(self, element: WebElement) -> str:
         try:
@@ -1158,7 +1158,7 @@ class DriverClient(object):
                 EC.element_to_be_clickable(element))
             return element.text
         except Exception as err:
-            self.check_throw(Error(f"ERROR: {err}"))
+            self.check_throw(Error(f"ERROR: {err}."))
 
     def set_attribute_of_node(
             self, xpath: str, attribute: str, value: str) -> None:
@@ -1170,7 +1170,7 @@ class DriverClient(object):
                     attribute}', '{value}')"
             )
         except Exception as err:
-            self.check_throw(Error(f"ERROR: {err}"))
+            self.check_throw(Error(f"ERROR: {err}."))
 
     def remove_attribute_of_node(self, xpath: str, attribute: str) -> None:
         try:
@@ -1181,7 +1181,7 @@ class DriverClient(object):
                     xpath}', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.removeAttribute('{attribute}');"
             )
         except Exception as err:
-            self.check_throw(Error(f"ERROR: {err}"))
+            self.check_throw(Error(f"ERROR: {err}."))
 
     def get_property_from_node(self, xpath: str, attr: str) -> Any:
         try:
@@ -1189,7 +1189,7 @@ class DriverClient(object):
                 EC.element_to_be_clickable((By.XPATH, xpath)))
             return element.get_property(attr)
         except Exception as err:
-            self.check_throw(Error(f"ERROR: {err}"))
+            self.check_throw(Error(f"ERROR: {err}."))
 
     def get_attribute_from_node(self, xpath: str, attr: str) -> Any:
         try:
@@ -1197,7 +1197,7 @@ class DriverClient(object):
                 EC.presence_of_element_located((By.XPATH, xpath)))
             return element.get_attribute(attr)
         except Exception as err:
-            self.check_throw(Error(f"ERROR: {err}"))
+            self.check_throw(Error(f"ERROR: {err}."))
 
     def get_inner_html_from_node(self, xpath: str) -> str:
         try:
@@ -1205,7 +1205,7 @@ class DriverClient(object):
                 EC.presence_of_element_located((By.XPATH, xpath)))
             return element.get_attribute('innerHTML')
         except Exception as err:
-            self.check_throw(Error(f"ERROR: {err}"))
+            self.check_throw(Error(f"ERROR: {err}."))
 
     def get_outer_html_from_node(self, xpath: str) -> str:
         try:
@@ -1213,7 +1213,7 @@ class DriverClient(object):
                 EC.presence_of_element_located((By.XPATH, xpath)))
             return element.get_attribute('outerHTML')
         except Exception as err:
-            self.check_throw(Error(f"ERROR: {err}"))
+            self.check_throw(Error(f"ERROR: {err}."))
 
     def check_node_for_property(self, xpath: str, property: str) -> bool:
         try:
@@ -1221,7 +1221,7 @@ class DriverClient(object):
                 EC.element_to_be_clickable((By.XPATH, xpath)))
             return bool(element.get_property(property))
         except Exception as err:
-            self.check_throw(Error(f"ERROR: {err}"))
+            self.check_throw(Error(f"ERROR: {err}."))
 
     def select_option_from_dropdown(
             self, xpath: str, select_type: DROPDOWNTYPE, value: Any) -> None:
@@ -1236,4 +1236,4 @@ class DriverClient(object):
             elif select_type == DROPDOWNTYPE.TEXT:
                 select.select_by_visible_text(value)
         except Exception as err:
-            self.check_throw(Error(f"ERROR: {err}"))
+            self.check_throw(Error(f"ERROR: {err}."))
