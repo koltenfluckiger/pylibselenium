@@ -502,7 +502,6 @@ class DriverClient(object):
                 WebDriverWait(
                     self.driver, self.poll_time, poll_frequency=self.poll_frequency
                 ).until(EC.element_to_be_clickable(element))
-            print(wrapped_elements)
             return wrapped_elements
 
         except Exception as err:
