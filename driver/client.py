@@ -345,7 +345,8 @@ class DriverClient(object):
                     url}'"
             )
         except Exception as err:
-            self.check_throw(Error(f"Unable to open new tab to {url}. Error:{err}"))
+            self.check_throw(
+                Error(f"Unable to open new tab to {url}. Error:{err}"))
 
     def get_current_iframe(self):
         """
@@ -505,6 +506,7 @@ class DriverClient(object):
             return wrapped_elements
 
         except Exception as err:
+
             self.check_throw(
                 Error(
                     f"Failed to find elements: {xpath}. Error:{err}"))
@@ -522,19 +524,18 @@ class DriverClient(object):
         Raises:
             Error: If an exception occurs during the element location process.
         """
-
         try:
             elements = WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
                 PresenceOfAllElementsLocatedIfNotEmpty((By.XPATH, xpath)))
             return elements if type(elements) == list else False
         except Exception as err:
-            self.check_throw(Error(f"Failed to find elements: {xpath}. Error:{err}"))
+            self.check_throw(
+                Error(f"Failed to find elements: {xpath}. Error:{err}"))
 
     def get_element_relative(
             self, parent_element: WebElement, xpath: str) -> WebElement:
         """
         Find a child element relative to the given parent element using an XPath.
-
         Args:
             parent_element (WebElement): The parent element from which to find the child.
             xpath (str): The XPath expression to locate the child element.
@@ -565,7 +566,8 @@ class DriverClient(object):
                 self.driver, self.poll_time, poll_frequency=self.poll_frequency
             ).until(EC.element_to_be_clickable((By.XPATH, xpath)))
         except Exception as err:
-            self.check_throw(Error(f"Failed to find element: {xpath}. Error:{err}"))
+            self.check_throw(
+                Error(f"Failed to find element: {xpath}. Error:{err}"))
 
     def try_to_get_element(self, xpath: str) -> WebElement:
         """
@@ -625,7 +627,8 @@ class DriverClient(object):
                 self.driver, self.poll_time, poll_frequency=self.poll_frequency
             ).until(EC.element_to_be_clickable(c_element))
         except Exception as err:
-            self.check_throw(Error(f"Failed to find element: {xpath}. Error:{err}"))
+            self.check_throw(
+                Error(f"Failed to find element: {xpath}. Error:{err}"))
 
     def find_and_send_modifer_key(self, xpath: str, key: Any) -> None:
         """
@@ -1022,23 +1025,21 @@ class DriverClient(object):
         try:
             return self.driver.window_handles
         except Exception as err:
-            self.check_throw(
-                Error("Failed to get current window handles. ERROR: {}".format(err)))
+            self.check_throw(Error(f"Failed to get current window handles. ERROR: {err}"))
 
     def get_current_window_handle(self):
         try:
             return self.driver.current_window_handle
         except Exception as err:
             self.check_throw(
-                Error("Failed to save current window handle. ERROR: {}".format(err)))
+                Error(f"Failed to save current window handle. ERROR: {err}"))
 
     def find_window_handle_switch_to_it_close_previous(self, index):
         try:
             WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
                 WindowHandleToBeAvailableSwitchClosePrevious(index))
         except Exception as err:
-            self.check_throw(
-                Error("Failed to find window index: {} and switch.".format(index)))
+            self.check_throw(Error(f"Failed to find window index: {index} and switch."))
 
     def find_window_handle_switch_to_it(self, index):
         try:
@@ -1046,8 +1047,7 @@ class DriverClient(object):
                 WindowHandleToBeAvailable(index))
             self.driver.switch_to.window(window)
         except Exception as err:
-            self.check_throw(
-                Error("Failed to find window index: {} and switch.".format(index)))
+            self.check_throw(Error(f"Failed to find window index: {index} and switch."))
 
     def get_window_handle_id(self, index: int) -> str:
         try:
