@@ -55,7 +55,7 @@ class Safari(DriverInterface):
 
     def factory(self) -> object:
         try:
-            return webdriver.Safari(executable_path=self.executable_path, service_args=self.service_args)
+            return webdriver.Safari(service=self.service, options=self.options)
         except Exception as err:
             traceback.print_exc()
 
