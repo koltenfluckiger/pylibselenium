@@ -14,6 +14,7 @@ def Measure(f):
         elapsed = timeit.default_timer() - start_time
         time.elapsed = elapsed
         return result
+
     return time
 
 
@@ -26,5 +27,7 @@ def MeasureSequence(f):
             g()
             elapsed = timeit.default_timer() - start_time
             timed.elapsed = elapsed
+
         return timed
+
     return wrap

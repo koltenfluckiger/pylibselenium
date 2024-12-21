@@ -15,8 +15,7 @@ class CachedElement:
         self.element = None
 
     def get_element_dom(self):
-        element = self.driver_client.driver.find_element(
-            By.XPATH, self.locator)
+        element = self.driver_client.driver.find_element(By.XPATH, self.locator)
         print(element)
         return element
 

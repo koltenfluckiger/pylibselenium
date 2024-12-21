@@ -18,7 +18,7 @@ class ProfileClient(object):
 
     def __del__(self):
         try:
-            self.driver=None
+            self.driver = None
         except Exception as err:
             print(err)
 
@@ -70,8 +70,8 @@ class ProfileClient(object):
         try:
             now = datetime.now()
             cookie = self.driver.get_cookie(cookie)
-            expiration = cookie['expiry']
-            expiration_date = datetime.fromtimestamp(cookie['expiry'])
+            expiration = cookie["expiry"]
+            expiration_date = datetime.fromtimestamp(cookie["expiry"])
             if expiration_date < now:
                 return True
             else:

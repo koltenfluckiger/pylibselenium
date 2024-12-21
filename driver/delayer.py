@@ -5,7 +5,13 @@ import time
 def DelayerMetaClass(
     function,
     timer,
-    ignore={"__init__": "", "__del__": "", "_kill_processes": "", "_delete_profile": "", "check_throw": ""},
+    ignore={
+        "__init__": "",
+        "__del__": "",
+        "_kill_processes": "",
+        "_delete_profile": "",
+        "check_throw": "",
+    },
 ):
 
     class MetaClass(type):

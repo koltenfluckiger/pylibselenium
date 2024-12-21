@@ -10,16 +10,20 @@ except ImportError as err:
 class Directory(Enum):
 
     DEFAULT_WINDOWS_FIREFOX = "{}\\Roaming\\Mozilla\\Firefox\\Profiles".format(
-        os.getenv('APPDATA'))
+        os.getenv("APPDATA")
+    )
     DEFAULT_WINDOWS_CHROME = "{}\\Local\\Google\\Chrome\\User Data".format(
-        os.getenv('APPDATA'))
+        os.getenv("APPDATA")
+    )
     DEFAULT_WINDOWS_EDGE = "{}\\Local\\Microsoft\\Edge\\User Data\\Default".format(
-        os.getenv('APPDATA'))
+        os.getenv("APPDATA")
+    )
 
     DEFAULT_LINUX_FIREFOX = "{}/.mozilla/firefox/".format(path.home())
     DEFAULT_LINUX_CHROME = "{}/.config/google-chrome/default".format(path.home())
     DEFAULT_LINUX_EDGE = "{}\\Local\\Microsoft\\Edge\\User Data\\Default".format(
-        path.home())
+        path.home()
+    )
 
     def __str__(self):
         return self.value

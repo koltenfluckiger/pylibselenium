@@ -61,13 +61,22 @@ class Safari(DriverInterface):
 
 class RemoteWebdriver(DriverInterface):
 
-    def __init__(self, remote_url: str, options: BrowserOptions = ChromeOptions(), keep_alive: bool = False) -> None:
+    def __init__(
+        self,
+        remote_url: str,
+        options: BrowserOptions = ChromeOptions(),
+        keep_alive: bool = False,
+    ) -> None:
         self.remote_url = remote_url
         self.options = options
         self.keep_alive = keep_alive
 
     def factory(self) -> object:
         try:
-            return webdriver.Remote(command_executor=self.remote_url, options=self.options, keep_alive=self.keep_alive)
+            return webdriver.Remote(
+                command_executor=self.remote_url,
+                options=self.options,
+                keep_alive=self.keep_alive,
+            )
         except Exception as err:
             traceback.print_exc()

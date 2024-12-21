@@ -59,7 +59,9 @@ class ChromeOptions(BrowserOptions):
                 options = self.disable_bot_detection(options)
             if self.debug_mode:
                 options.add_experimental_option("detach", True)
-            options.set_capability("goog:loggingPrefs", {"performance": "ALL", "browser": "ALL"})
+            options.set_capability(
+                "goog:loggingPrefs", {"performance": "ALL", "browser": "ALL"}
+            )
             options.add_experimental_option("prefs", self.preferences)
             self.options = options
             return self.options
@@ -69,7 +71,9 @@ class ChromeOptions(BrowserOptions):
 
 class FirefoxOptions(BrowserOptions):
 
-    def __init__(self, arguments: List[str] = [], extension_paths: List[str] = []) -> None:
+    def __init__(
+        self, arguments: List[str] = [], extension_paths: List[str] = []
+    ) -> None:
         self.arguments = arguments
         self.extension_paths = extension_paths
 

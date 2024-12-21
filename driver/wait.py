@@ -100,7 +100,9 @@ class WaitElementToBeClickable:
     def __call__(self, driver):
         try:
             sleep(self.wait)
-            element = WebDriverWait(driver, self.wait).until(EC.element_to_be_clickable(self.locator))
+            element = WebDriverWait(driver, self.wait).until(
+                EC.element_to_be_clickable(self.locator)
+            )
             element.click()
             return True
         except Exception as err:

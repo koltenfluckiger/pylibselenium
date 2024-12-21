@@ -19,7 +19,9 @@ class BrowserService(ABC):
 
 class ChromeService(BrowserService):
 
-    def __init__(self, executable_path: str, log_path=f'{os.getenv("TMP")}/chromeservice.log'):
+    def __init__(
+        self, executable_path: str, log_path=f'{os.getenv("TMP")}/chromeservice.log'
+    ):
         self.executable_path = executable_path
         self.log_path = log_path
 
@@ -32,7 +34,9 @@ class ChromeService(BrowserService):
 
 class FirefoxService(BrowserService):
 
-    def __init__(self, executable_path: str, log_path=f"{os.getenv('TMP')}/firefoxservice.log"):
+    def __init__(
+        self, executable_path: str, log_path=f"{os.getenv('TMP')}/firefoxservice.log"
+    ):
         self.executable_path = executable_path
         self.log_path = log_path
 
@@ -46,7 +50,10 @@ class FirefoxService(BrowserService):
 class SafariService(BrowserService):
 
     def __init__(
-        self, executable_path: str, log_path: str = f"{os.getenv('TMP')}/safariservice.log", quiet: bool = False
+        self,
+        executable_path: str,
+        log_path: str = f"{os.getenv('TMP')}/safariservice.log",
+        quiet: bool = False,
     ):
         self.executable_path = executable_path
         self.log_path = log_path
@@ -54,6 +61,10 @@ class SafariService(BrowserService):
 
     def factory(self) -> object:
         try:
-            return SS(executable_path=self.executable_path, log_path=self.log_path, quiet=self.quiet)
+            return SS(
+                executable_path=self.executable_path,
+                log_path=self.log_path,
+                quiet=self.quiet,
+            )
         except Exception as err:
             print(err)
