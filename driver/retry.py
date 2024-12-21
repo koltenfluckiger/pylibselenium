@@ -22,6 +22,7 @@ from time import sleep
 #         return f(*args, **kwargs)
 #     return wrapper
 
+
 def retry(retries=3, delay=1):
     def decorator(func):
         def newfn(*args, **kwargs):
@@ -34,8 +35,11 @@ def retry(retries=3, delay=1):
                     attempt += 1
                     return func(*args, **kwargs)
             return func(*args, **kwargs)
+
         return newfn
+
     return decorator
+
 
 # def retry_until_successful(f=None, delay=1, log=False):
 #     if f is None:

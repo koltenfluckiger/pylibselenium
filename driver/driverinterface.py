@@ -28,8 +28,7 @@ class Chrome(DriverInterface):
 
     def factory(self) -> object:
         try:
-            return webdriver.Chrome(service=self.service,
-                                    options=self.options)
+            return webdriver.Chrome(service=self.service, options=self.options)
         except Exception as err:
             traceback.print_exc()
 

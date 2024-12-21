@@ -45,7 +45,9 @@ class FirefoxService(BrowserService):
 
 class SafariService(BrowserService):
 
-    def __init__(self, executable_path: str, log_path: str = f"{os.getenv('TMP')}/safariservice.log", quiet: bool = False):
+    def __init__(
+        self, executable_path: str, log_path: str = f"{os.getenv('TMP')}/safariservice.log", quiet: bool = False
+    ):
         self.executable_path = executable_path
         self.log_path = log_path
         self.quiet = quiet

@@ -8,10 +8,10 @@ except ImportError as err:
 
 class MODIFERKEYS(Enum):
 
-    CTRL = '\ue009'
-    ALT = '\ue00a'
-    SHIFT = '\ue008'
-    ENTER = '\ue007'
+    CTRL = "\ue009"
+    ALT = "\ue00a"
+    SHIFT = "\ue008"
+    ENTER = "\ue007"
 
     def __str__(self):
         return self.value

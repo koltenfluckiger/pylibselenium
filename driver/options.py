@@ -9,6 +9,7 @@ from selenium.webdriver.chrome.options import Options as ChromeOption
 from selenium.webdriver.firefox.options import Options as FirefoxOption
 from selenium.webdriver.safari.options import Options as SafariOption
 
+
 class BrowserOptions(ABC):
 
     def factory(self) -> object:
@@ -17,8 +18,15 @@ class BrowserOptions(ABC):
 
 class ChromeOptions(BrowserOptions):
 
-    def __init__(self, arguments: List[str] = [], preferences: Dict = {},
-                 extension_paths: List[str] = [], binary_path: str = None, disable_bot_detection_flag: bool = False, debug_mode=False) -> None:
+    def __init__(
+        self,
+        arguments: List[str] = [],
+        preferences: Dict = {},
+        extension_paths: List[str] = [],
+        binary_path: str = None,
+        disable_bot_detection_flag: bool = False,
+        debug_mode=False,
+    ) -> None:
         self.arguments = arguments
         self.preferences = preferences
         self.extension_paths = extension_paths
@@ -28,16 +36,12 @@ class ChromeOptions(BrowserOptions):
 
     def disable_bot_detection(self, options):
         try:
-            options.add_argument(
-                "--start-maximized")
+            options.add_argument("--start-maximized")
             options.add_argument("window-size=1024,768")
-            options.add_argument(
-                "--disable-blink-features")
-            options.add_argument(
-                "--disable-blink-features=AutomationControlled")
-            options.add_experimental_option(
-                "excludeSwitches", ['enable-automation'])
-            options.add_experimental_option('useAutomationExtension', False)
+            options.add_argument("--disable-blink-features")
+            options.add_argument("--disable-blink-features=AutomationControlled")
+            options.add_experimental_option("excludeSwitches", ["enable-automation"])
+            options.add_experimental_option("useAutomationExtension", False)
             return options
         except Exception as err:
             print(err)
@@ -55,8 +59,7 @@ class ChromeOptions(BrowserOptions):
                 options = self.disable_bot_detection(options)
             if self.debug_mode:
                 options.add_experimental_option("detach", True)
-            options.set_capability("goog:loggingPrefs", {
-                                   'performance': 'ALL', 'browser': 'ALL'})
+            options.set_capability("goog:loggingPrefs", {"performance": "ALL", "browser": "ALL"})
             options.add_experimental_option("prefs", self.preferences)
             self.options = options
             return self.options
@@ -66,8 +69,7 @@ class ChromeOptions(BrowserOptions):
 
 class FirefoxOptions(BrowserOptions):
 
-    def __init__(self, arguments: List[str] = [],
-                 extension_paths: List[str] = []) -> None:
+    def __init__(self, arguments: List[str] = [], extension_paths: List[str] = []) -> None:
         self.arguments = arguments
         self.extension_paths = extension_paths
 
@@ -82,6 +84,7 @@ class FirefoxOptions(BrowserOptions):
             return self.options
         except Exception as err:
             print(err)
+
 
 class SafariOptions(BrowserOptions):
 

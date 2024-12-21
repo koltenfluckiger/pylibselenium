@@ -1,4 +1,3 @@
-
 from typing import List
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 
