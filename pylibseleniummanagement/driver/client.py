@@ -29,14 +29,26 @@ except ImportError as err:
     print(f"Unable to import: {err}")
     exit()
 
-TEMP_DIR = (
-    pathlib.Path(os.getenv("TEMP") or "/tmp")
-    .joinpath("pylibseleniummanagement.log")
-    .resolve()
-)
+# Create log directory and file path
+log_dir = pathlib.Path(os.getenv("TEMP", "/tmp"))
+log_file = log_dir / "pylibseleniummanagement.log"
 
-logging.basicConfig(filename=TEMP_DIR)
+print(f"Log file will be created at: {log_file}")
 
+# Ensure the directory exists
+log_dir.mkdir(parents=True, exist_ok=True)
+
+# Configure logging with proper format and level
+# Only configure if not already configured
+if not logging.getLogger().handlers:
+    logging.basicConfig(
+        filename=str(log_file),
+        level=logging.NOTSET,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        filemode='a'  # Append mode
+    )
+
+logger = logging.getLogger(__name__)
 
 class Error(Exception):
     def __init__(self, text):
@@ -45,19 +57,8 @@ class Error(Exception):
 
 class DriverClient(object):
 
-    def __init__(
-        self,
-        driver: DriverInterface,
-        poll_time: int = 10,
-        poll_frequency: int = 1,
-        scroll_pause_time: int = 5,
-        debug_mode: bool = False,
-        throw: bool = False,
-        delete_profile: bool = False,
-        close_previous_sessions: bool = False,
-        action_delay: int = 0,
-        disable_bot_detection_flag: bool = False,
-    ) -> None:
+    def __init__(self, driver: DriverInterface, poll_time: int = 10, poll_frequency: int = 1, scroll_pause_time: int = 5, debug_mode: bool = False, throw: bool = False,
+                 delete_profile: bool = False, close_previous_sessions: bool = False, action_delay: int = 0, disable_bot_detection_flag: bool = False) -> None:
         """
         A client to interact with and manipulate web pages using Selenium.
 
@@ -146,39 +147,29 @@ class DriverClient(object):
 
     def _delete_profile(self):
         with contextlib.suppress(Exception):
-            browser_name = self.driver.capabilities["browserName"]
-            if browser_name == "chrome":
-                data_dir = self.driver.capabilities["chrome"]["userDataDir"]
-            elif browser_name == "firefox":
-                data_dir = self.driver.capabilities["moz:profile"]
+            browser_name = self.driver.capabilities['browserName']
+            if browser_name == 'chrome':
+                data_dir = self.driver.capabilities['chrome']['userDataDir']
+            elif browser_name == 'firefox':
+                data_dir = self.driver.capabilities['moz:profile']
             shutil.rmtree(Path(data_dir).resolve())
 
     def __setup(self):
         try:
-            os_platform = {"windows": "Win32", "linux": "MacIntel"}
-            current_os = (
-                os_platform["windows"]
-                if "windows" in platform()
-                else os_platform["linux"]
-            )
+            os_platform = {
+                "windows": "Win32",
+                "linux": "MacIntel"
+            }
+            current_os = os_platform['windows'] if 'windows' in platform(
+            ) else os_platform['linux']
             if self.disable_bot_detection_flag:
-                self.driver.execute_cdp_cmd(
-                    "Network.setUserAgentOverride",
-                    {
-                        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.53 Safari/537.36"
-                    },
-                )
-                self.driver.execute_cdp_cmd(
-                    "Page.addScriptToEvaluateOnNewDocument",
-                    {
-                        "source": "Object.defineProperty(navigator, 'webdriver', {get: ()=> false}), Object.defineProperty(navigator,'languages', {get: ()=> ['en-US', 'en']}), Object.defineProperty(navigator, 'platform', {get: () =>'MacIntel'}), Object.defineProperty(navigator, 'deviceMemory', {get: () => 8})"
-                    },
-                )
+                self.driver.execute_cdp_cmd('Network.setUserAgentOverride', {
+                    "userAgent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.53 Safari/537.36'})
+                self.driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
+                    "source": "Object.defineProperty(navigator, 'webdriver', {get: ()=> false}), Object.defineProperty(navigator,'languages', {get: ()=> ['en-US', 'en']}), Object.defineProperty(navigator, 'platform', {get: () =>'MacIntel'}), Object.defineProperty(navigator, 'deviceMemory', {get: () => 8})"})
                 self.driver.execute_script(
-                    "Object.defineProperty(navigator, 'webdriver', {get: () => false})"
-                )
-                self.driver.execute_script(
-                    """
+                    "Object.defineProperty(navigator, 'webdriver', {get: () => false})")
+                self.driver.execute_script("""
                 var inject = function () {
                 var overwrite = function (name) {
                 const OLD = HTMLCanvasElement.prototype[name];
@@ -214,13 +205,12 @@ class DriverClient(object):
                 overwrite('toDataURL');
             };
             inject();
-                """
-                )
+                """)
         except Exception as err:
             print(err)
 
     def check_throw(self, error: Error) -> None:
-        logging.critical(error)
+        logger.critical(f"Error: {error.text}")
         traceback.print_exception(error)
         if self.throw:
             raise error
@@ -327,16 +317,13 @@ class DriverClient(object):
 
         try:
             browser_height = self.driver.execute_script(
-                "return document.body.scrollHeight"
-            )
+                "return document.body.scrollHeight")
             for _ in range(times):
                 self.driver.execute_script(
-                    "window.scrollTo(0, document.body.scrollHeight);"
-                )
+                    "window.scrollTo(0, document.body.scrollHeight);")
                 sleep(self.scroll_pause_time)
                 new_browser_height = self.driver.execute_script(
-                    "return document.body.scrollHeight"
-                )
+                    "return document.body.scrollHeight")
                 if new_browser_height == browser_height:
                     break
                 browser_height = new_browser_height
@@ -369,10 +356,12 @@ class DriverClient(object):
 
         try:
             self.execute_script(
-                f"var newWindow = window.open(); newWindow.location.href = '{url}'"
+                f"var newWindow = window.open(); newWindow.location.href = '{
+                    url}'"
             )
         except Exception as err:
-            self.check_throw(Error(f"Unable to open new tab to {url}. Error:{err}"))
+            self.check_throw(
+                Error(f"Unable to open new tab to {url}. Error:{err}"))
 
     def get_current_iframe(self):
         """
@@ -422,8 +411,7 @@ class DriverClient(object):
     ## ELEMENT FUNCTIONS ##
 
     def press_modifer_key_send_keys(
-        self, modifer_key: MODIFERKEYS, keys: Any = ""
-    ) -> None:
+            self, modifer_key: MODIFERKEYS, keys: Any = "") -> None:
         """
         Presses a modifier key while sending keys and then releases the modifier key.
 
@@ -461,8 +449,7 @@ class DriverClient(object):
             self.check_throw(Error(f"ERROR: {err}."))
 
     def press_modifer_key_send_keys_on_element(
-        self, element: WebElement, modifer_key: MODIFERKEYS, keys: Any = ""
-    ) -> None:
+            self, element: WebElement, modifer_key: MODIFERKEYS, keys: Any = "") -> None:
         """
         Presses a modifier key while sending keys to a specific element and then releases the modifier key.
 
@@ -477,16 +464,14 @@ class DriverClient(object):
 
         try:
             action = ActionChains(self.driver)
-            action.key_down(modifer_key, element).send_keys(keys, element).key_up(
-                modifer_key, element
-            )
+            action.key_down(modifer_key, element).send_keys(
+                keys, element).key_up(modifer_key, element)
             action.perform()
         except Exception as err:
             self.check_throw(Error(f"ERROR: {err}."))
 
     def press_modifer_key_on_element(
-        self, element: WebElement, modifer_key: MODIFERKEYS
-    ) -> None:
+            self, element: WebElement, modifer_key: MODIFERKEYS) -> None:
         """
         Presses and releases a modifier key on a specific element.
 
@@ -525,8 +510,7 @@ class DriverClient(object):
 
             # Wrap each element in the LocatedElement class
             wrapped_elements = [
-                LocatedWebElement(self.driver, element.id, (By.XPATH, xpath))
-                for element in elements
+                LocatedWebElement(self.driver, element.id, (By.XPATH, xpath)) for element in elements
             ]
 
             # Ensure each element is clickable
@@ -538,7 +522,9 @@ class DriverClient(object):
 
         except Exception as err:
 
-            self.check_throw(Error(f"Failed to find elements: {xpath}. Error:{err}"))
+            self.check_throw(
+                Error(
+                    f"Failed to find elements: {xpath}. Error:{err}"))
 
     def get_elements_until_none(self, xpath: str) -> WebElement:
         """
@@ -554,16 +540,15 @@ class DriverClient(object):
             Error: If an exception occurs during the element location process.
         """
         try:
-            elements = WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(PresenceOfAllElementsLocatedIfNotEmpty((By.XPATH, xpath)))
+            elements = WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                PresenceOfAllElementsLocatedIfNotEmpty((By.XPATH, xpath)))
             return elements if type(elements) == list else False
         except Exception as err:
-            self.check_throw(Error(f"Failed to find elements: {xpath}. Error:{err}"))
+            self.check_throw(
+                Error(f"Failed to find elements: {xpath}. Error:{err}"))
 
     def get_element_relative(
-        self, parent_element: WebElement, xpath: str
-    ) -> WebElement:
+            self, parent_element: WebElement, xpath: str) -> WebElement:
         """
         Find a child element relative to the given parent element using an XPath.
         Args:
@@ -577,8 +562,7 @@ class DriverClient(object):
             return parent_element.find_element(By.XPATH, xpath)
         except Exception as err:
             self.check_throw(
-                Error(f"Failed to find relative element: {xpath}. Error:{err}")
-            )
+                Error(f"Failed to find relative element: {xpath}. Error:{err}"))
             return None
 
     def get_element(self, xpath: str) -> WebElement:
@@ -597,7 +581,8 @@ class DriverClient(object):
                 self.driver, self.poll_time, poll_frequency=self.poll_frequency
             ).until(EC.element_to_be_clickable((By.XPATH, xpath)))
         except Exception as err:
-            self.check_throw(Error(f"Failed to find element: {xpath}. Error:{err}"))
+            self.check_throw(
+                Error(f"Failed to find element: {xpath}. Error:{err}"))
 
     def try_to_get_element(self, xpath: str) -> WebElement:
         """
@@ -657,7 +642,8 @@ class DriverClient(object):
                 self.driver, self.poll_time, poll_frequency=self.poll_frequency
             ).until(EC.element_to_be_clickable(c_element))
         except Exception as err:
-            self.check_throw(Error(f"Failed to find element: {xpath}. Error:{err}"))
+            self.check_throw(
+                Error(f"Failed to find element: {xpath}. Error:{err}"))
 
     def find_and_send_modifer_key(self, xpath: str, key: Any) -> None:
         """
@@ -672,21 +658,18 @@ class DriverClient(object):
         """
 
         try:
-            WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(EC.presence_of_element_located((By.XPATH, xpath)))
-            element = WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(EC.element_to_be_clickable((By.XPATH, xpath)))
+            WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                EC.presence_of_element_located((By.XPATH, xpath)))
+            element = WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                EC.element_to_be_clickable((By.XPATH, xpath)))
             element.send_keys(key)
         except Exception as err:
             self.check_throw(
                 Error(f"Failed to find element: {xpath} and send keys: {key}")
             )
 
-    def find_element_and_send_modifer_key(
-        self, element: WebElement, modifier_key: Any
-    ) -> None:
+    def find_and_send_modifer_key(
+            self, element: WebElement, modifier_key: Any) -> None:
         """
         Finds an element and sends a modifier key to it.
 
@@ -699,15 +682,13 @@ class DriverClient(object):
         """
 
         try:
-            WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(EC.presence_of_element_located(element))
+            WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                EC.presence_of_element_located(element))
             element.send_keys(modifier_key)
         except Exception as err:
             self.check_throw(
                 Error(
-                    f"Failed to find element: {element} and send keys: {modifier_key}"
-                )
+                    f"Failed to find element: {element} and send keys: {modifier_key}")
             )
 
     def send_modifer_key(self, modifier_key) -> None:
@@ -727,15 +708,12 @@ class DriverClient(object):
             traceback.print_exc()
 
     def find_and_click_send_modifer_key(
-        self, xpath: str, modifer_key: Any, keys: Any
-    ) -> None:
+            self, xpath: str, modifer_key: Any, keys: Any) -> None:
         try:
-            WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(EC.presence_of_element_located((By.XPATH, xpath)))
-            element = WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(EC.element_to_be_clickable((By.XPATH, xpath)))
+            WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                EC.presence_of_element_located((By.XPATH, xpath)))
+            element = WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                EC.element_to_be_clickable((By.XPATH, xpath)))
             self.click_element(element)
             self.press_modifer_key_send_keys(modifer_key, keys)
         except Exception as err:
@@ -762,18 +740,17 @@ class DriverClient(object):
         """
 
         try:
-            WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(EC.element_to_be_clickable((By.XPATH, xpath)))
-            WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(WaitForKeysVerification((By.XPATH, xpath), keys))
+            WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                EC.element_to_be_clickable((By.XPATH, xpath)))
+            WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                WaitForKeysVerification((By.XPATH, xpath), keys))
         except Exception as err:
             self.check_throw(
                 Error(f"Failed to find element: {xpath} and send keys: {keys}")
             )
 
-    def find_and_send_keys_with_delay(self, xpath: str, keys: Any, delay=1) -> None:
+    def find_and_send_keys_with_delay(
+            self, xpath: str, keys: Any, delay=1) -> None:
         """
         Find an element by XPath, send keys with a delay, and verify the keys sent.
 
@@ -793,12 +770,10 @@ class DriverClient(object):
             None
         """
         try:
-            WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(EC.element_to_be_clickable((By.XPATH, xpath)))
-            WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(WaitForKeysVerificationWithDelay((By.XPATH, xpath), keys, delay=1))
+            WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                EC.element_to_be_clickable((By.XPATH, xpath)))
+            WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                WaitForKeysVerificationWithDelay((By.XPATH, xpath), keys, delay=1))
         except Exception as err:
             self.check_throw(
                 Error(f"Failed to find element: {xpath} and send keys: {keys}")
@@ -806,16 +781,13 @@ class DriverClient(object):
 
     def find_click_and_send_keys(self, xpath: str, keys: str) -> None:
         try:
-            WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(EC.presence_of_element_located((By.XPATH, xpath)))
-            element = WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(EC.element_to_be_clickable((By.XPATH, xpath)))
+            WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                EC.presence_of_element_located((By.XPATH, xpath)))
+            element = WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                EC.element_to_be_clickable((By.XPATH, xpath)))
             self.click_element(element)
-            WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(WaitForKeysVerification((By.XPATH, xpath), keys))
+            WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                WaitForKeysVerification((By.XPATH, xpath), keys))
         except Exception as err:
             self.check_throw(
                 Error(f"Failed to find element: {xpath} and send keys: {keys}")
@@ -823,48 +795,44 @@ class DriverClient(object):
 
     def find_and_click(self, xpath: str) -> None:
         try:
-            WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(EC.presence_of_element_located((By.XPATH, xpath)))
-            element = WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(EC.element_to_be_clickable((By.XPATH, xpath)))
+            WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                EC.presence_of_element_located((By.XPATH, xpath)))
+            element = WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                EC.element_to_be_clickable((By.XPATH, xpath)))
             self.click_element(element)
 
         except Exception as err:
-            self.check_throw(Error(f"Failed to find element: {xpath} and click."))
+            self.check_throw(
+                Error(f"Failed to find element: {xpath} and click."))
 
     def find_and_click_and_wait_for_element(
-        self, xpath: str, element_xpath: str
-    ) -> None:
+            self, xpath: str, element_xpath: str) -> None:
         try:
-            WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(EC.presence_of_element_located((By.XPATH, xpath)))
-            element = WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(EC.element_to_be_clickable((By.XPATH, xpath)))
+            WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                EC.presence_of_element_located((By.XPATH, xpath)))
+            element = WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                EC.element_to_be_clickable((By.XPATH, xpath)))
             self.click_element(element)
-            WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(EC.presence_of_element_located((By.XPATH, element_xpath)))
+            WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                EC.presence_of_element_located((By.XPATH, element_xpath)))
 
         except Exception as err:
-            self.check_throw(Error(f"Failed to find element: {xpath} and click."))
+            self.check_throw(
+                Error(f"Failed to find element: {xpath} and click."))
 
-    def find_click_and_send_keys_and_go(self, xpath: str, keys: str, url: str) -> None:
+    def find_click_and_send_keys_and_go(
+            self, xpath: str, keys: str, url: str) -> None:
         try:
-            WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(EC.presence_of_element_located((By.XPATH, xpath)))
-            element = WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(EC.element_to_be_clickable((By.XPATH, xpath)))
+            WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                EC.presence_of_element_located((By.XPATH, xpath)))
+            element = WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                EC.element_to_be_clickable((By.XPATH, xpath)))
             self.click_element(element)
             self.driver.go(url)
 
         except Exception as err:
-            self.check_throw(Error(f"Failed to find element: {xpath} and click."))
+            self.check_throw(
+                Error(f"Failed to find element: {xpath} and click."))
 
     def click_element(self, element: WebElement) -> None:
         try:
@@ -875,7 +843,8 @@ class DriverClient(object):
             action.perform()
 
         except Exception as err:
-            self.check_throw(Error(f"Failed to find element: {element} and click."))
+            self.check_throw(
+                Error(f"Failed to find element: {element} and click."))
 
     def try_to_click_element(self, element: WebElement) -> None:
         try:
@@ -887,147 +856,147 @@ class DriverClient(object):
                 action.perform()
 
         except Exception as err:
-            self.check_throw(Error(f"Failed to find element: {element} and click."))
+            self.check_throw(
+                Error(f"Failed to find element: {element} and click."))
 
     def click_chain_elements_infinitely(
-        self, xpaths: list, pause_time: int = 0
-    ) -> None:
+            self, xpaths: list, pause_time: int = 0) -> None:
         while True:
             try:
                 for xpath in xpaths:
-                    WebDriverWait(
-                        self.driver, self.poll_time, poll_frequency=self.poll_frequency
-                    ).until(EC.presence_of_element_located((By.XPATH, xpath)))
-                    element = WebDriverWait(
-                        self.driver, self.poll_time, poll_frequency=self.poll_frequency
-                    ).until(EC.element_to_be_clickable((By.XPATH, xpath)))
+                    WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                        EC.presence_of_element_located((By.XPATH, xpath)))
+                    element = WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                        EC.element_to_be_clickable((By.XPATH, xpath)))
                     self.click_element(element)
                 sleep(pause_time)
             except Exception as err:
-                self.check_throw(Error(f"Failed to find element: {xpath} and click."))
+                self.check_throw(
+                    Error(f"Failed to find element: {xpath} and click."))
 
     def click_chain_elements(
-        self, xpaths: list, pause_time: int = 0, loop_count: int = 10
-    ) -> None:
+            self, xpaths: list, pause_time: int = 0, loop_count: int = 10) -> None:
         try:
             for _ in range(loop_count):
                 for xpath in xpaths:
-                    WebDriverWait(
-                        self.driver, self.poll_time, poll_frequency=self.poll_frequency
-                    ).until(EC.presence_of_element_located((By.XPATH, xpath)))
-                    element = WebDriverWait(
-                        self.driver, self.poll_time, poll_frequency=self.poll_frequency
-                    ).until(EC.element_to_be_clickable((By.XPATH, xpath)))
+                    WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                        EC.presence_of_element_located((By.XPATH, xpath)))
+                    element = WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                        EC.element_to_be_clickable((By.XPATH, xpath)))
                     self.click_element(element)
                 sleep(pause_time)
         except Exception as err:
-            self.check_throw(Error(f"Failed to find element: {xpath} and click."))
+            self.check_throw(
+                Error(f"Failed to find element: {xpath} and click."))
 
-    def click_all_elements_and_scroll(self, xpath: str, scroll_count=1) -> None:
+    def click_all_elements_and_scroll(
+            self, xpath: str, scroll_count=1) -> None:
         try:
-            elements = WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(EC.presence_of_all_elements_located((By.XPATH, xpath)))
+            elements = WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                EC.presence_of_all_elements_located((By.XPATH, xpath)))
             for element in elements:
-                WebDriverWait(
-                    self.driver, self.poll_time, poll_frequency=self.poll_frequency
-                ).until(EC.element_to_be_clickable(element))
+                WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                    EC.element_to_be_clickable(element))
                 self.click_element(element)
 
             self.scroll_to_bottom(scroll_count)
         except Exception as err:
-            self.check_throw(Error(f"Failed to find element: {xpath} and click."))
+            self.check_throw(
+                Error(f"Failed to find element: {xpath} and click."))
 
     def click_and_wait_for_load(self, xpath: str):
         try:
-            WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(WaitForLoadAfterClick((By.XPATH, xpath)))
+            WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                WaitForLoadAfterClick((By.XPATH, xpath)))
         except Exception as err:
             print(err)
-            self.check_throw(Error(f"Failed to find element: {xpath} and click."))
+            self.check_throw(
+                Error(f"Failed to find element: {xpath} and click."))
 
     def click_and_wait_for_element(self, xpath: str, xpath2: str):
         try:
-            WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(WaitForElementAfterClick((By.XPATH, xpath), (By.XPATH, xpath2)))
+            WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                WaitForElementAfterClick((By.XPATH, xpath), (By.XPATH, xpath2)))
         except Exception as err:
             print(err)
-            self.check_throw(Error(f"Failed to find element: {xpath} and click."))
+            self.check_throw(
+                Error(f"Failed to find element: {xpath} and click."))
 
     def click_and_wait_for_html_load(self, xpath: str):
         try:
-            WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(WaitForHtmlLoadAfterClick((By.XPATH, xpath)))
+            WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                WaitForHtmlLoadAfterClick((By.XPATH, xpath)))
         except Exception as err:
             print(err)
-            self.check_throw(Error(f"Failed to find element: {xpath} and click."))
+            self.check_throw(
+                Error(f"Failed to find element: {xpath} and click."))
 
     def click_element_and_wait_for_load(self, element: WebElement):
         try:
-            WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(EC.element_to_be_clickable(element))
-            WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(WaitForHtmlLoadAfterClickElement(element))
+            WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                EC.element_to_be_clickable(element))
+            WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                WaitForHtmlLoadAfterClickElement(element))
         except Exception as err:
             print(err)
-            self.check_throw(Error("Failed to find element and click."))
+            self.check_throw(
+                Error("Failed to find element and click."))
 
     def wait_for_element(self, xpath: str) -> None:
         try:
-            WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(EC.presence_of_element_located((By.XPATH, xpath)))
+            WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                EC.presence_of_element_located((By.XPATH, xpath)))
         except Exception as err:
-            self.check_throw(Error(f"Failed to find element: {xpath} and click."))
+            self.check_throw(
+                Error(f"Failed to find element: {xpath} and click."))
 
     def wait_to_click_element(self, xpath: str, wait: int = 1) -> None:
         try:
-            WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(WaitElementToBeClickable((By.XPATH, xpath), wait))
+            WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                WaitElementToBeClickable((By.XPATH, xpath), wait))
         except Exception as err:
-            self.check_throw(Error(f"Failed to find element: {xpath} and click."))
+            self.check_throw(
+                Error(f"Failed to find element: {xpath} and click."))
 
-    def wait_for_element_to_disappear_by_xpath(self, xpath: str, wait: int = 1) -> None:
+    def wait_for_element_to_disappear_by_xpath(
+            self, xpath: str, wait: int = 1) -> None:
         try:
-            WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(WaitForElementToBeStale((By.XPATH, xpath), wait))
+            WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                WaitForElementToBeStale((By.XPATH, xpath), wait))
         except Exception as err:
             print()
-            self.check_throw(Error(f"Failed to find element: {xpath} and click."))
+            self.check_throw(
+                Error(f"Failed to find element: {xpath} and click."))
 
-    def wait_for_element_to_disappear(self, element: str, wait: int = 1) -> None:
+    def wait_for_element_to_disappear(
+            self, element: str, wait: int = 1) -> None:
         try:
-            WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(WaitForElementToBeStale(element, wait))
+            WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                WaitForElementToBeStale(element, wait))
         except Exception as err:
-            self.check_throw(Error(f"Failed to find element: {element} and click."))
+            self.check_throw(
+                Error(f"Failed to find element: {element} and click."))
 
     def element_exists(self, xpath: str) -> bool:
         try:
-            return bool(element := WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency.until(EC.presence_of_element_located((By.XPATH, xpath)))))
+            return bool(
+                element := WebDriverWait(
+                    self.driver, self.poll_time, poll_frequency=self.poll_frequency
+                ).until(EC.presence_of_element_located((By.XPATH, xpath)))
+            )
         except Exception as err:
             return False
 
     def click_all_elements(self, xpath: str) -> None:
         try:
             processed_elements = set()
-            elements = WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(EC.presence_of_all_elements_located((By.XPATH, xpath)))
+            elements = WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                EC.presence_of_all_elements_located((By.XPATH, xpath)))
             for element in elements:
                 if element in processed_elements:
                     continue
-                WebDriverWait(
-                    self.driver, self.poll_time, poll_frequency=self.poll_frequency
-                ).until(EC.element_to_be_clickable(element))
+                WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                    EC.element_to_be_clickable(element))
                 action = ActionChains(self.driver)
                 action.move_to_element(element)
                 action.click(element)
@@ -1040,66 +1009,57 @@ class DriverClient(object):
             #         EC.element_to_be_clickable(element))
             #     self.click_element(element)
         except Exception as err:
-            self.check_throw(Error(f"Failed to find element: {xpath} and click."))
+            self.check_throw(
+                Error(f"Failed to find element: {xpath} and click."))
 
     def click_all_elements_and_reload(self, xpath: str) -> None:
         try:
-            elements = WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(EC.presence_of_all_elements_located((By.XPATH, xpath)))
+            elements = WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                EC.presence_of_all_elements_located((By.XPATH, xpath)))
             for element in elements:
-                WebDriverWait(
-                    self.driver, self.poll_time, poll_frequency=self.poll_frequency
-                ).until(EC.element_to_be_clickable(element))
+                WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                    EC.element_to_be_clickable(element))
                 self.click_element(element)
 
             self.driver.refresh()
         except Exception as err:
             self.check_throw(
-                Error("Failed to find element: {} and click.".format(xpath))
-            )
+                Error("Failed to find element: {} and click.".format(xpath)))
 
     ## FRAME FUNCTIONS ##
 
     def find_frame_switch(self, xpath: str) -> None:
         try:
-            WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(EC.frame_to_be_available_and_switch_to_it((By.XPATH, xpath)))
+            WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                EC.frame_to_be_available_and_switch_to_it((By.XPATH, xpath)))
         except Exception as err:
             self.check_throw(
-                Error("Failed to find element: {} and switch.".format(xpath))
-            )
+                Error("Failed to find element: {} and switch.".format(xpath)))
 
     def get_window_handles(self):
         try:
             return self.driver.window_handles
         except Exception as err:
-            self.check_throw(
-                Error(f"Failed to get current window handles. ERROR: {err}")
-            )
+            self.check_throw(Error(f"Failed to get current window handles. ERROR: {err}"))
 
     def get_current_window_handle(self):
         try:
             return self.driver.current_window_handle
         except Exception as err:
             self.check_throw(
-                Error(f"Failed to save current window handle. ERROR: {err}")
-            )
+                Error(f"Failed to save current window handle. ERROR: {err}"))
 
     def find_window_handle_switch_to_it_close_previous(self, index):
         try:
-            WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(WindowHandleToBeAvailableSwitchClosePrevious(index))
+            WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                WindowHandleToBeAvailableSwitchClosePrevious(index))
         except Exception as err:
             self.check_throw(Error(f"Failed to find window index: {index} and switch."))
 
     def find_window_handle_switch_to_it(self, index):
         try:
-            window = WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(WindowHandleToBeAvailable(index))
+            window = WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                WindowHandleToBeAvailable(index))
             self.driver.switch_to.window(window)
         except Exception as err:
             self.check_throw(Error(f"Failed to find window index: {index} and switch."))
@@ -1112,9 +1072,8 @@ class DriverClient(object):
 
     def switch_to_latest_window(self) -> None:
         try:
-            window = WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(WindowHandleToBeAvailable(len(self.driver.window_handles) - 1))
+            window = WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                WindowHandleToBeAvailable(len(self.driver.window_handles) - 1))
             self.driver.switch_to.window(window)
         except Exception as err:
             self.check_throw(Error(f"ERROR: {err}."))
@@ -1143,28 +1102,24 @@ class DriverClient(object):
             value_changed = not False
             while value_changed:
                 try:
-                    WebDriverWait(
-                        self.driver, self.poll_time, poll_frequency=self.poll_frequency
-                    ).until(WaitForValueToChange((By.XPATH, xpath)))
+                    WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                        WaitForValueToChange((By.XPATH, xpath)))
                     value_changed = not True
                 except Exception as err:
                     self.check_throw(Error(f"ERROR: {err}."))
         else:
             try:
-                WebDriverWait(
-                    self.driver, self.poll_time, poll_frequency=self.poll_frequency
-                ).until(WaitForValueToChange((By.XPATH, xpath)))
+                WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                    WaitForValueToChange((By.XPATH, xpath)))
             except Exception as err:
                 self.check_throw(Error(f"ERROR: {err}."))
 
     def check_node_css_property(
-        self, xpath: str, property: str, search: str, value: str, return_value=False
-    ) -> Any:
+            self, xpath: str, property: str, search: str, value: str, return_value=False) -> Any:
         try:
             search_str = re.compile(search)
-            element = WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(EC.presence_of_element_located((By.XPATH, xpath)))
+            element = WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                EC.presence_of_element_located((By.XPATH, xpath)))
             element_property = element.value_of_css_property(property)
             if not (match := search_str.findall(element_property)):
                 return False
@@ -1176,9 +1131,8 @@ class DriverClient(object):
         except Exception as err:
             self.check_throw(Error(f"ERROR: {err}."))
 
-    def execute_script(
-        self, script: str, return_value=False, node: WebElement = None
-    ) -> Any:
+    def execute_script(self, script: str, return_value=False,
+                       node: WebElement = None) -> Any:
         try:
             if return_value:
                 return self.driver.execute_script(script)
@@ -1198,105 +1152,96 @@ class DriverClient(object):
 
     def get_text_from_node_convert(self, xpath: str, ctype: Any) -> Any:
         try:
-            element = WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(EC.element_to_be_clickable((By.XPATH, xpath)))
+            element = WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                EC.element_to_be_clickable((By.XPATH, xpath)))
             return ctype(element.text)
         except Exception as err:
             self.check_throw(Error(f"ERROR: {err}."))
 
     def get_text_from_node(self, xpath: str) -> str:
         try:
-            element = WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(EC.element_to_be_clickable((By.XPATH, xpath)))
+            element = WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                EC.element_to_be_clickable((By.XPATH, xpath)))
             return element.text
         except Exception as err:
             self.check_throw(Error(f"ERROR: {err}."))
 
     def get_text_from_node_element(self, element: WebElement) -> str:
         try:
-            element = WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(EC.element_to_be_clickable(element))
+            element = WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                EC.element_to_be_clickable(element))
             return element.text
         except Exception as err:
             self.check_throw(Error(f"ERROR: {err}."))
 
-    def set_attribute_of_node(self, xpath: str, attribute: str, value: str) -> None:
+    def set_attribute_of_node(
+            self, xpath: str, attribute: str, value: str) -> None:
         try:
-            element = WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(EC.presence_of_element_located((By.XPATH, xpath)))
+            element = WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                EC.presence_of_element_located((By.XPATH, xpath)))
             self.execute_script(
-                f"document.evaluate('{xpath}', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.setAttribute('{attribute}', '{value}')"
+                f"document.evaluate('{xpath}', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.setAttribute('{
+                    attribute}', '{value}')"
             )
         except Exception as err:
             self.check_throw(Error(f"ERROR: {err}."))
 
     def remove_attribute_of_node(self, xpath: str, attribute: str) -> None:
         try:
-            element = WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(EC.presence_of_element_located((By.XPATH, xpath)))
+            element = WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                EC.presence_of_element_located((By.XPATH, xpath)))
             self.execute_script(
-                f"document.evaluate('{xpath}', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.removeAttribute('{attribute}');"
+                f"document.evaluate('{
+                    xpath}', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.removeAttribute('{attribute}');"
             )
         except Exception as err:
             self.check_throw(Error(f"ERROR: {err}."))
 
     def get_property_from_node(self, xpath: str, attr: str) -> Any:
         try:
-            element = WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(EC.element_to_be_clickable((By.XPATH, xpath)))
+            element = WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                EC.element_to_be_clickable((By.XPATH, xpath)))
             return element.get_property(attr)
         except Exception as err:
             self.check_throw(Error(f"ERROR: {err}."))
 
     def get_attribute_from_node(self, xpath: str, attr: str) -> Any:
         try:
-            element = WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(EC.presence_of_element_located((By.XPATH, xpath)))
+            element = WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                EC.presence_of_element_located((By.XPATH, xpath)))
             return element.get_attribute(attr)
         except Exception as err:
             self.check_throw(Error(f"ERROR: {err}."))
 
     def get_inner_html_from_node(self, xpath: str) -> str:
         try:
-            element = WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(EC.presence_of_element_located((By.XPATH, xpath)))
-            return element.get_attribute("innerHTML")
+            element = WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                EC.presence_of_element_located((By.XPATH, xpath)))
+            return element.get_attribute('innerHTML')
         except Exception as err:
             self.check_throw(Error(f"ERROR: {err}."))
 
     def get_outer_html_from_node(self, xpath: str) -> str:
         try:
-            element = WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(EC.presence_of_element_located((By.XPATH, xpath)))
-            return element.get_attribute("outerHTML")
+            element = WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                EC.presence_of_element_located((By.XPATH, xpath)))
+            return element.get_attribute('outerHTML')
         except Exception as err:
             self.check_throw(Error(f"ERROR: {err}."))
 
     def check_node_for_property(self, xpath: str, property: str) -> bool:
         try:
-            element = WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(EC.element_to_be_clickable((By.XPATH, xpath)))
+            element = WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                EC.element_to_be_clickable((By.XPATH, xpath)))
             return bool(element.get_property(property))
         except Exception as err:
             self.check_throw(Error(f"ERROR: {err}."))
 
     def select_option_from_dropdown(
-        self, xpath: str, select_type: DROPDOWNTYPE, value: Any
-    ) -> None:
+            self, xpath: str, select_type: DROPDOWNTYPE, value: Any) -> None:
         try:
-            element = WebDriverWait(
-                self.driver, self.poll_time, poll_frequency=self.poll_frequency
-            ).until(EC.element_to_be_clickable((By.XPATH, xpath)))
+            element = WebDriverWait(self.driver, self.poll_time, poll_frequency=self.poll_frequency).until(
+                EC.element_to_be_clickable((By.XPATH, xpath)))
             select = Select(element)
             if select_type == DROPDOWNTYPE.INDEX:
                 select.select_by_index(value)

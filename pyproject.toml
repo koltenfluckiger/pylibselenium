@@ -1,0 +1,17 @@
+[project]
+name = "pylibseleniummanagement"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Kolten Fluckiger",email = "wrtunder@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "selenium (>=4.35.0,<5.0.0)"
+]
+
+packages = [{include = "pylibseleniummanagement"}]
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
