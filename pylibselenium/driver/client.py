@@ -29,26 +29,6 @@ except ImportError as err:
     print(f"Unable to import: {err}")
     exit()
 
-# Create log directory and file path
-log_dir = pathlib.Path(os.getenv("TEMP", "/tmp"))
-log_file = log_dir / "pylibseleniummanagement.log"
-
-print(f"Log file will be created at: {log_file}")
-
-# Ensure the directory exists
-log_dir.mkdir(parents=True, exist_ok=True)
-
-# Configure logging with proper format and level
-# Only configure if not already configured
-if not logging.getLogger().handlers:
-    logging.basicConfig(
-        filename=str(log_file),
-        level=logging.NOTSET,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        filemode='a'  # Append mode
-    )
-
-logger = logging.getLogger(__name__)
 
 class Error(Exception):
     def __init__(self, text):
@@ -718,7 +698,7 @@ class DriverClient(object):
             self.press_modifer_key_send_keys(modifer_key, keys)
         except Exception as err:
             self.check_throw(
-                Error(f"Failed to find element: {xpath} and send keys: {keys}")
+                Error(f"Failed to find element: {xpath} and send keys: {keys}. Error: {err}")
             )
 
     def find_and_send_keys(self, xpath: str, keys: Any) -> None:
@@ -746,7 +726,7 @@ class DriverClient(object):
                 WaitForKeysVerification((By.XPATH, xpath), keys))
         except Exception as err:
             self.check_throw(
-                Error(f"Failed to find element: {xpath} and send keys: {keys}")
+                Error(f"Failed to find element: {xpath} and send keys: {keys}. Error: {err}")
             )
 
     def find_and_send_keys_with_delay(
@@ -776,7 +756,7 @@ class DriverClient(object):
                 WaitForKeysVerificationWithDelay((By.XPATH, xpath), keys, delay=1))
         except Exception as err:
             self.check_throw(
-                Error(f"Failed to find element: {xpath} and send keys: {keys}")
+                Error(f"Failed to find element: {xpath} and send keys: {keys}. Error: {err}")
             )
 
     def find_click_and_send_keys(self, xpath: str, keys: str) -> None:
@@ -790,7 +770,7 @@ class DriverClient(object):
                 WaitForKeysVerification((By.XPATH, xpath), keys))
         except Exception as err:
             self.check_throw(
-                Error(f"Failed to find element: {xpath} and send keys: {keys}")
+                Error(f"Failed to find element: {xpath} and send keys: {keys}. Error: {err}")
             )
 
     def find_and_click(self, xpath: str) -> None:
