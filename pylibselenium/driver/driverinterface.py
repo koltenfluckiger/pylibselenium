@@ -1,6 +1,5 @@
 import traceback
 
-from pylibseleniummanagement.driver.options import *
 
 from .options import BrowserOptions
 from .services import BrowserService
@@ -8,7 +7,7 @@ from .services import BrowserService
 try:
     import os
     from abc import ABC
-
+    from appium import webdriver as appium_webdriver
     from selenium import webdriver
 except ImportError as err:
     print("Unable to import: {}".format(err))
@@ -64,7 +63,7 @@ class RemoteWebdriver(DriverInterface):
     def __init__(
         self,
         remote_url: str,
-        options: BrowserOptions = ChromeOptions(),
+        options: BrowserOptions = BrowserOptions(),
         keep_alive: bool = False,
     ) -> None:
         self.remote_url = remote_url
@@ -74,6 +73,28 @@ class RemoteWebdriver(DriverInterface):
     def factory(self) -> object:
         try:
             return webdriver.Remote(
+                command_executor=self.remote_url,
+                options=self.options,
+                keep_alive=self.keep_alive,
+            )
+        except Exception as err:
+            traceback.print_exc()
+
+class Appium(DriverInterface):
+
+    def __init__(
+        self,
+        remote_url: str,
+        options: BrowserOptions = BrowserOptions(),
+        keep_alive: bool = False,
+    ) -> None:
+        self.remote_url = remote_url
+        self.options = options
+        self.keep_alive = keep_alive
+        
+    def factory(self) -> object:
+        try:
+            return appium_webdriver.Remote(
                 command_executor=self.remote_url,
                 options=self.options,
                 keep_alive=self.keep_alive,

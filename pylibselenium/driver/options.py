@@ -8,7 +8,7 @@ except ImportError as err:
 from selenium.webdriver.chrome.options import Options as ChromeOption
 from selenium.webdriver.firefox.options import Options as FirefoxOption
 from selenium.webdriver.safari.options import Options as SafariOption
-
+from appium.options.common.base import AppiumOptions
 
 class BrowserOptions(ABC):
 
@@ -98,6 +98,21 @@ class SafariOptions(BrowserOptions):
     def factory(self) -> object:
         try:
             options = SafariOption()
+            for arg in self.arguments:
+                options.add_argument(arg)
+            self.options = options
+            return self.options
+        except Exception as err:
+            print(err)
+
+class AppiumOptions(BrowserOptions):
+
+    def __init__(self, arguments: List[str] = []) -> None:
+        self.arguments = arguments
+
+    def factory(self) -> object:
+        try:
+            options = AppiumOptions()
             for arg in self.arguments:
                 options.add_argument(arg)
             self.options = options
