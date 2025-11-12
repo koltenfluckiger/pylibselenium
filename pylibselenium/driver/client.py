@@ -262,6 +262,25 @@ class DriverClient(object):
         except Exception as err:
             self.check_throw(Error(f"ERROR: {err}."))
 
+    def go_and_wait_for_load(self, url: str) -> None:
+        """
+        Navigates the driver to the specified URL and waits for the HTML to fully load.
+
+        Args:
+            url (str): The URL to navigate to.
+
+        Raises:
+            Error: If an exception occurs during the navigation process or if the page doesn't load within the timeout period.
+        """
+
+        try:
+            self.driver.get(url)
+            WebDriverWait(
+                self.driver, self.poll_time, poll_frequency=self.poll_frequency
+            ).until(WaitForPageLoad())
+        except Exception as err:
+            self.check_throw(Error(f"ERROR: {err}."))
+
     def reload(self) -> None:
         """
         Reloads the current page in the driver session.
@@ -313,7 +332,46 @@ class DriverClient(object):
                 browser_height = new_browser_height
         except Exception as err:
             self.check_throw(Error(f"ERROR: {err}."))
+            
+    def scroll_to_bottom_watch_element_height(self, times: int, locator: str) -> None:
+        """
+        Scrolls to the bottom of the page a specified number of times.
 
+        Args:
+            times (int): The number of times to scroll to the bottom of the page.
+            locator (str): The locator of the element to watch the height of.
+        Raises:
+            Error: If an exception occurs during the scrolling process.
+        """
+
+        try:
+            element_height = self.driver.execute_script(
+                f"return document.querySelector('{locator}').height")
+            for _ in range(times):
+                self.driver.execute_script(
+                    "window.scrollTo(0, document.body.scrollHeight);")
+                sleep(self.scroll_pause_time)
+                new_element_height = self.driver.execute_script(
+                    f"return document.querySelector('{locator}').height")
+                if new_element_height == element_height:
+                    break
+                element_height = new_element_height
+        except Exception as err:
+            self.check_throw(Error(f"ERROR: {err}."))
+    def scroll_to_element(self, locator: str) -> None:
+        """
+        Scrolls to the element specified by the locator.
+
+        Args:
+            locator (str): The locator of the element to scroll to.
+        """
+        try:
+            action = ActionChains(self.driver)
+            action.scroll_to_element(locator)
+            action.perform()
+        except Exception as err:
+            self.check_throw(Error(f"ERROR: {err}."))
+        
     def open_new_tab(self) -> None:
         """
         Opens a new tab in the browser.

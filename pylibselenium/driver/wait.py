@@ -54,6 +54,17 @@ class WindowHandleToBeAvailable:
             return False
 
 
+class WaitForPageLoad:
+    """Check if the page has fully loaded by checking document.readyState."""
+
+    def __call__(self, driver):
+        try:
+            ready_state = driver.execute_script("return document.readyState")
+            return ready_state == "complete"
+        except Exception:
+            return False
+
+
 class WaitForElementReadyState:
     """Check if an element located by the locator is in a ready state."""
 
