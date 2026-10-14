@@ -1,0 +1,169 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>pylibselenium fixture</title>
+<style>
+  body { font-family: sans-serif; }
+  #hidden { display: none; }
+  #covered-wrap { position: relative; width: 200px; height: 40px; }
+  #overlay { position: absolute; left: 0; top: 0; width: 200px; height: 40px; background: rgba(255, 0, 0, 0.3); z-index: 10; }
+  #appears { display: none; }
+  #tall { height: 1500px; background: linear-gradient(#eee, #ccc); }
+  iframe { width: 300px; height: 120px; }
+</style>
+</head>
+<body>
+<h1 id="title">pylibselenium fixture</h1>
+<p id="hidden">hidden text</p>
+
+<section id="inputs">
+  <input id="text" type="text" placeholder="text">
+  <input id="text2" type="text" placeholder="text2">
+  <input id="short" type="text" maxlength="5" placeholder="maxlength 5">
+  <input id="enter-input" type="text" placeholder="press enter"><span id="enter-pressed"></span>
+</section>
+
+<section id="buttons">
+  <button id="btn-nav">go to page two</button>
+  <button id="btn-remove">remove me</button>
+  <button id="btn-remove2">remove me too</button>
+  <button id="counter">count</button><span id="counter-value">0</span>
+  <button id="disabled-btn" disabled>disabled</button>
+</section>
+
+<ul id="items">
+  <li><button class="del">delete 1</button></li>
+  <li><button class="del">delete 2</button></li>
+  <li><button class="del">delete 3</button></li>
+  <li><button class="del">delete 4</button></li>
+  <li><button class="del">delete 5</button></li>
+</ul>
+<ul id="mixed">
+  <li><button>enabled</button></li>
+  <li><button disabled>disabled</button></li>
+</ul>
+<ul id="ten">
+  <li>1</li><li>2</li><li>3</li><li>4</li><li>5</li><li>6</li><li>7</li><li>8</li><li>9</li><li>10</li>
+</ul>
+
+<select id="sel">
+  <option value="a">Ay</option>
+  <option value="b">Bee</option>
+  <option value="c">Cee</option>
+</select>
+
+<iframe id="outer" name="outer" src="frame1.html"></iframe>
+
+<p><a id="newtab" href="page2.html" target="_blank" rel="opener">open page two in a new tab</a></p>
+
+<section id="dialogs">
+  <button id="btn-alert">alert</button>
+  <button id="btn-confirm">confirm</button><span id="confirm-result"></span>
+  <button id="btn-prompt">prompt</button><span id="prompt-result"></span>
+</section>
+
+<section id="mouse">
+  <div id="hoverme">hover me</div>
+  <div id="dbl">double click me</div>
+  <div id="ctx">right click me</div>
+  <div id="covered-wrap"><button id="covered">covered button</button><div id="overlay"></div></div><span id="covered-result"></span>
+</section>
+
+<section id="upload">
+  <input id="file" type="file"><span id="file-name"></span>
+</section>
+
+<form id="login-form" onsubmit="return false;">
+  <input id="user" type="text" placeholder="user">
+  <input id="pass" type="password" placeholder="password">
+  <button id="login" type="button">login</button>
+  <div id="error" style="display: none;">bad credentials</div>
+</form>
+
+<p><a id="dl" href="data.bin" download="data.bin">download data.bin</a></p>
+
+<section id="timed">
+  <span id="later" data-state="pending">pending</span>
+  <ul id="count"></ul>
+  <div id="appears">appeared</div>
+  <div id="disappears">going away</div>
+</section>
+
+<div id="tall"></div>
+<div id="lazy"></div>
+<p id="bottom-marker">bottom</p>
+
+<script>
+  console.error('fixture-error');
+  document.getElementById('btn-nav').addEventListener('click', function () {
+    setTimeout(function () { window.location.href = 'page2.html'; }, 500);
+  });
+  document.getElementById('btn-remove').addEventListener('click', function () { this.remove(); });
+  document.getElementById('btn-remove2').addEventListener('click', function () { this.remove(); });
+  document.getElementById('counter').addEventListener('click', function () {
+    var v = document.getElementById('counter-value');
+    v.textContent = String(parseInt(v.textContent, 10) + 1);
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('#items .del'), function (button) {
+    button.addEventListener('click', function () { this.closest('li').remove(); });
+  });
+  document.getElementById('enter-input').addEventListener('keydown', function (event) {
+    if (event.key === 'Enter') { document.getElementById('enter-pressed').textContent = 'yes'; }
+  });
+  document.getElementById('btn-alert').addEventListener('click', function () { alert('hello alert'); });
+  document.getElementById('btn-confirm').addEventListener('click', function () {
+    document.getElementById('confirm-result').textContent = confirm('ok?') ? 'ok' : 'cancel';
+  });
+  document.getElementById('btn-prompt').addEventListener('click', function () {
+    document.getElementById('prompt-result').textContent = prompt('name?') || '';
+  });
+  document.getElementById('hoverme').addEventListener('mouseover', function () { this.textContent = 'hovered'; });
+  document.getElementById('dbl').addEventListener('dblclick', function () { this.textContent = 'double'; });
+  document.getElementById('ctx').addEventListener('contextmenu', function (event) {
+    event.preventDefault(); this.textContent = 'context';
+  });
+  document.getElementById('covered').addEventListener('click', function () {
+    document.getElementById('covered-result').textContent = 'clicked';
+  });
+  document.getElementById('file').addEventListener('change', function () {
+    document.getElementById('file-name').textContent = this.files.length ? this.files[0].name : '';
+  });
+  document.getElementById('login').addEventListener('click', function () {
+    if (document.getElementById('pass').value === 'secret') {
+      window.location.href = 'login-ok.html';
+    } else {
+      document.getElementById('error').style.display = 'block';
+    }
+  });
+  setTimeout(function () {
+    var later = document.getElementById('later');
+    later.textContent = 'ready';
+    later.setAttribute('data-state', 'ready');
+  }, 1000);
+  var added = 0;
+  var adder = setInterval(function () {
+    var li = document.createElement('li');
+    li.textContent = 'item ' + (++added);
+    document.getElementById('count').appendChild(li);
+    if (added >= 3) { clearInterval(adder); }
+  }, 300);
+  setTimeout(function () {
+    document.getElementById('appears').style.display = 'block';
+    document.getElementById('disappears').style.display = 'none';
+  }, 800);
+  var lazyCount = 0;
+  window.addEventListener('scroll', function () {
+    var nearBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 50;
+    if (nearBottom && lazyCount < 30) {
+      var lazy = document.getElementById('lazy');
+      for (var i = 0; i < 10; i++) {
+        var p = document.createElement('p');
+        p.textContent = 'lazy item ' + (++lazyCount);
+        lazy.appendChild(p);
+      }
+    }
+  });
+</script>
+</body>
+</html>

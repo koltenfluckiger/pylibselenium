@@ -1,18 +1,34 @@
 [project]
 name = "pylibselenium"
-version = "0.3.0"
-description = ""
+version = "0.5.0"
+description = "A facade over Selenium WebDriver: resilient waits, click/type helpers, page-change detection, tabs, frames, cookies and timing."
 authors = [
     {name = "Kolten Fluckiger",email = "wrtunder@gmail.com"}
 ]
 readme = "README.md"
 requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Internet :: WWW/HTTP :: Browsers",
+]
 dependencies = [
     "selenium (>=4.35.0,<5.0.0)",
-    "appium-python-client (>=5.2.4,<6.0.0)"
+    "appium-python-client (>=5.2.4,<6.0.0)",
+    "psutil (>=5.9.0)"
 ]
 
-packages = [{include = "pylibselenium"}]
+[tool.poetry]
+packages = [
+    { include = "pylibselenium" },
+    { include = "pylibseleniummanagement" }
+]
+
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"

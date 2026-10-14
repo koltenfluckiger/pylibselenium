@@ -1,0 +1,147 @@
+# AI State
+
+## Current Session
+
+### Goal
+0.5.0 efficiency / bug-fix / feature pass on pylibselenium (user: "analyze the performance and usage and make changes to improve the efficiency of the package and usage and also add features"). Approved plan: /home/kfluckiger/.claude/plans/look-at-this-python-humble-cook.md.
+
+### Status
+DONE (2026-10-08). All 11 plan steps complete. 0.5.0 wheel built (pylibselenium + pylibseleniummanagement) and installed into /usr/local/lib/python3.14/dist-packages; every installed module is byte-identical to the source. Final headless smoke run on the installed wheel: Chrome 87/87, Firefox 87/87 (examples/smoke_test.py). Mock-driver checks, alias-package checks, import-without-psutil/appium check and the 22-caller-script byte-compile/method-name check all pass. Not committed (user did not ask).
+
+### Active Tasks
+- [x] Step 1: types.py, directory.py, delayer.py, retry.py, preferences.py
+- [x] Step 2: services.py (log_output, Selenium Manager default, EdgeService, Safari enable_logging)
+- [x] Step 3: options.py (mutable defaults, Appium alias, headless/user_agent/proxy/download_dir/..., EdgeOptions, perf logging opt-in)
+- [x] Step 4: driverinterface.py (service/options optional, wrapper-or-raw, legacy keywords, Edge, grid URL normalisation, raise on failure)
+- [x] Step 5: wait.py (AllElementsVisibleAndEnabled, keys-verification short-circuit + key-code guard, window-close fix, NewWindowOpened, narrowed excepts)
+- [x] Step 6: dom/cachedelement.py
+- [x] Step 7: client.py (helpers, efficiency rewrites, bug fixes, wired flags, context managers, new methods)
+- [x] Step 8: performance/, profile/ (JSON cookies, ensure_session), logger/
+- [x] Step 9: __init__ exports (Edge*, Logger)
+- [x] Step 10: pylibseleniummanagement alias package, pyproject 0.5.0 + psutil + [tool.poetry] packages, Makefile, build + install
+- [x] Step 11: examples/smoke_test.py + fixtures, caller py_compile check, README, CHANGELOG, final .ai/state handoff
+
+### Important Context
+- User decisions (2026-10-08): ship BOTH compat shims (pylibseleniummanagement alias package + legacy Chrome(executable_path=, chrome_options=) / Firefox(executable_path=, firefox_options=, firefox_profile=) keywords); change BOTH defaults (poll_frequency 1 -> 0.5; Chrome performance logging opt-in, browser logging stays on).
+- 21 caller scripts found; 17 import the old name pylibseleniummanagement (not installed anywhere), 6 use the legacy keywords. Full compatibility contract is in the plan file; key points: constructor positional order unchanged (new kwargs appended, AppiumClient forwards **kwargs); falsy returns (get_element -> None, try_to_get_element -> False, get_elements_until_none -> False, try_to_click_element(False) no-op); wait_for_element_to_disappear keeps `wait` as 2nd positional; Directory.DEFAULT_LINUX_CHROME value unchanged; .pkl cookie files stay pickle; open_new_tab* keep JS window.open semantics; no __all__ in wait.py; client.py must define its own logger AFTER `from .wait import *`.
+- Selenium 4.47.0 facts verified on this host: Service classes drop `log_path` silently (use log_output; a string path is open()ed in the constructor, so defaults must be None); Safari service takes enable_logging not quiet; get_log exists only on Chromium drivers; full-page screenshot native on Firefox only (Chrome via CDP); Firefox Options has no add_extension (use driver.install_addon); page_load_strategy settable on all options.
+- Design-review guidance adopted: action_delay via class-level @_paced decorator with a depth counter on mutating methods only; delete_profile only removes paths under tempfile.gettempdir() or the explicit ChromeOptions(user_data_dir=...) and skips webdriver.Remote; close_previous_sessions = in-process WeakSet registry only (no foreign process killing); UA derived from navigator.userAgent (HeadlessChrome -> Chrome), not a hardcoded string.
+- Behaviour changes to document in CHANGELOG: action_delay now sleeps (4 scripts set it), factories raise instead of print+None, execute_script returns by default, poll_frequency default, perf logging opt-in, delete_profile now acts (guarded).
+- Not in scope: pylibzen mirror, editing caller scripts, committing. poetry.lock has unrelated uncommitted changes (leave alone); uv.lock is stale (0.1.0).
+
+### Active Files
+- `pylibselenium/driver/*.py`, `pylibselenium/dom/cachedelement/cachedelement.py`, `pylibselenium/performance/*.py`, `pylibselenium/profile/client.py`, `pylibselenium/logger/logger.py`, `pylibselenium/__init__.py`, `pylibselenium/driver/__init__.py`
+- new: `pylibseleniummanagement/__init__.py`, `examples/smoke_test.py`, `examples/fixtures/*.html`, `CHANGELOG.md`
+- `pyproject.toml`, `Makefile`, `README.md`
+
+### Files Changed
+- `.ai/state`
+- `pylibselenium/driver/{types,directory,delayer,retry,preferences,services,options,driverinterface,wait,client,__init__}.py`
+- `pylibselenium/dom/cachedelement/cachedelement.py`, `pylibselenium/performance/{performance,measure}.py`, `pylibselenium/profile/client.py`, `pylibselenium/logger/logger.py`, `pylibselenium/__init__.py`
+- new `pylibseleniummanagement/__init__.py`; `pyproject.toml` (0.5.0, psutil, [tool.poetry] packages); `Makefile`
+- new `examples/smoke_test.py`, `examples/fixtures/{index,page2,frame1,frame2,login-ok,setcookie}.html`, `examples/fixtures/data.bin`
+- `README.md` (rewritten), new `CHANGELOG.md`
+
+### Commands Run
+- Final: `rm -rf dist && poetry build` -> dist/pylibselenium-0.5.0-py3-none-any.whl; `uv pip install --python /usr/bin/python3.14 --break-system-packages dist/pylibselenium-0.5.0-py3-none-any.whl` (make install still needs a venv in a non-interactive shell).
+- Smoke: from `/`, PATH stripped of ~/scripts/bin, `python3.14 -I examples/smoke_test.py --browser chrome --browser firefox` -> 87/87 + 87/87. Round trips measured: find_and_click 4, get_elements(10) 12, find_and_send_keys 10 (first poll). Earlier runs found and fixed: geckodriver rejects wheel-scroll/pointer-move on off-screen targets (now _pointer() retries after a JS scrollIntoView) and Firefox rejects re-adding cookies with sameSite=None and secure=False (ProfileClient._sanitize_cookie drops it).
+- py_compile / import checks per step: all pass. Offline mock-driver verification of client.py (constructor order, surface superset of the 0.4.0 snapshot, falsy returns, throw, action_delay pacing, context manager, registry, delete_profile guard, wait conditions, Logger idempotency, ProfileClient JSON+pickle, alias package, import with psutil/appium stubbed out): see chat; results summarised in Status once complete.
+- Gotcha hit: Bash heredoc writes that started with `cd <dir> &&` landed in the repo root when run in parallel; use absolute paths for every file write.
+
+### Decisions
+- (see Important Context)
+
+### Issues / Blockers
+- none open.
+- Behaviour notes for callers (documented in CHANGELOG): action_delay now really sleeps (snowticketcloser/ticketassigner 5 s, target-pokemon-buyer 2 s, iccu 1 s); drive-by-page's `if driver is None: exit` branch is dead because factories raise; execute_script returns values by default.
+
+### Next Steps
+- When the user asks: commit inside the pylibselenium submodule (all changed + new files listed above; poetry.lock has unrelated pre-existing changes), then commit the new gitlink in the monorepo.
+- Later: mirror the 0.5.0 changes into pylibzen; regenerate uv.lock (stale, still records 0.1.0); consider the roadmap items in README (BiDi network capture, undetected-chromedriver backend, kill_orphaned_drivers, async client).
+
+### Handoff Summary
+0.5.0 is implemented, built, installed and verified (two browsers, 87/87 each). Key design points: `_find/_find_all/_do_with_element/_pointer/_perform_click/_fail/_paced` helpers in client.py; wait.py adds AllElementsVisibleAndEnabled and NewWindowOpened; options/services/driverinterface accept wrappers or raw objects and legacy keywords; pylibseleniummanagement alias package registers pylibselenium.* in sys.modules; delete_profile only removes temp dirs or the explicit user_data_dir; close_previous_sessions is an in-process WeakSet registry. Verification tooling: examples/smoke_test.py (+ fixtures) and the mock-driver checks described in Commands Run. Nothing is committed. Resume at Next Steps.
+
+---
+
+## History
+
+### 2026-10-08 - Claude (Fable 5.1) - archived "Current Session" of the 2026-10-07 page-change work
+
+
+
+### Goal
+Make the "click a button -> wait until the browser has really left the page -> check an element exists / does not exist by XPath" flow reliable in pylibselenium. Triggered by ~/scripts/python/automation/instagram/drive-by-page.py login(): `click_and_wait_for_html_load(...)` then `wait_for_element_to_disappear('<xpath string>', wait=60)` returned instantly.
+
+### Status
+DONE. All code changes applied, package rebuilt as 0.4.0 and installed into /usr/local/lib/python3.14/dist-packages (installed copy == source). Headless smoke test: 29/29 checks pass on Chrome 154 and Firefox 157. Not committed (user did not ask).
+
+### Active Tasks
+- [x] Investigate root causes (wait.py predicates, client.py wrappers, external callers)
+- [x] wait.py: add ElementIsAbsent, ElementIsStale, WaitForPageChange, WaitForPageChangeAfterClick; rewrite WaitForHtmlLoadAfterClick / WaitForHtmlLoadAfterClickElement / WaitForLoadAfterClick as subclasses; fix WaitForElementAfterClick
+- [x] client.py: _timeout/_wait/_locator/_perform_click helpers; new page-change + element_does_not_exist methods; fix wait_for_element_to_disappear(_by_xpath), element_exists/wait_for_element timeouts; fix find_click_and_send_keys_and_go; rename shadowed find_and_send_modifer_key(element) -> send_modifer_key_to_element
+- [x] retry.py: fix retry() loop (port from pylibjobrunner)
+- [x] pyproject.toml 0.3.0 -> 0.4.0; README usage section
+- [x] py_compile + build + install; verified installed copy from outside the repo
+- [x] Headless-browser smoke test (Chrome 154 + Firefox 157, 29/29 each)
+- [ ] Commit in the pylibselenium submodule, then the new gitlink in the monorepo (only when the user asks)
+- [ ] Mirror the same fixes into pylibzen (user deferred)
+
+### Important Context
+- Installed copy /usr/local/lib/python3.14/dist-packages/pylibselenium is what the user has open in the IDE; it is refreshed only by `make all` (poetry build + uv pip install dist/*.whl). dist/ is gitignored in this submodule.
+- client.py gets `logger` only via `from .wait import *` -> never add `__all__` to wait.py.
+- WebDriverWait.until ignores only NoSuchElementException; predicates must classify exceptions themselves (transient WebDriverException -> keep polling; NoSuchWindow/NoSuchFrame/InvalidSessionId/UnexpectedAlert/InvalidSelector/driver TimeoutException -> re-raise).
+- Host drivers are mismatched (chromedriver 116 vs Chrome 154, geckodriver 0.30 vs Firefox 157); strip ~/scripts/bin from PATH so Selenium Manager fetches matching drivers, or use $SELENIUM_GRID_URL.
+- External callers to keep API-compatible: ~/scripts/workscripts/python/automation/servicenow/{snowticketcloser,ticketassigner,automaticserveradd}.py (click_and_wait_for_html_load, click_element_and_wait_for_load), ~/scripts/python/automation/facebook/removefbmemories.py (wait_for_element_to_disappear(tuple, 5), wait_for_element), drive-by-page.py, parcel-automation.py.
+- User preferences for this task: pylibselenium only (no pylibzen mirror now); fix the small extra bugs too; do NOT edit drive-by-page.py, just show the snippet.
+- poetry.lock has unrelated uncommitted changes; leave it alone. Do not commit unless asked.
+
+### Active Files
+- `pylibselenium/driver/wait.py`
+- `pylibselenium/driver/client.py`
+- `pylibselenium/driver/retry.py`
+- `pyproject.toml`
+- `README.md`
+
+### Files Changed
+- `.ai/state` (new)
+- `pylibselenium/driver/wait.py`
+- `pylibselenium/driver/client.py`
+- `pylibselenium/driver/retry.py`
+- `pyproject.toml` (0.3.0 -> 0.4.0)
+- `README.md` (new "Waiting for a page change" usage section)
+
+### Commands Run
+- `python3.14 -m py_compile` on wait.py / client.py / retry.py: OK.
+- `rm -f dist/*.whl && make all`: `poetry build` OK (dist/pylibselenium-0.4.0-py3-none-any.whl) but `make install` FAILED in this non-interactive shell: `uv pip install dist/*.whl` -> "No virtual environment found ... pass --system". Also MAKEFLAGS=-j 20 makes `all: build install` run both targets in parallel (latent race). Installed instead with `uv pip install --python /usr/bin/python3.14 --break-system-packages dist/pylibselenium-0.4.0-py3-none-any.whl` (0.3.0 uninstalled, 0.4.0 installed).
+- Verified from `/`: installed client.py and wait.py are byte-identical to source; new methods present; dist-info is 0.4.0.
+- Smoke test: scratchpad `smoke.py` + `fixtures/` served by `python3.14 -m http.server`, run with `python3.14 -I` from outside the repo (PATH stripped of ~/scripts/bin so Selenium Manager fetched chromedriver 154.0.8037.92 and a geckodriver into ~/.cache/selenium). Chrome 154.0.8037.97: 29/29. Firefox 157.0: 29/29. Cases: delayed navigation, pushState (URL signal), meta-refresh redirect chain (settle lands on page3), no-navigation -> False / raises with throw=True, string-locator disappear (the user's failure mode), tuple and WebElement disappear forms, in-page removal gating element_does_not_exist, iframe navigation with the legacy click_and_wait_for_html_load / click_element_and_wait_for_load (sub-second instead of 10 s timeout), strict vs element-level semantics, click_and_wait_for_element across a navigation, wait_for_element timeouts, get_page_root + wait_for_page_change, wait_for_url_change, retry decorator.
+
+### Decisions
+- `wait` on wait_for_element_to_disappear(_by_xpath) is reinterpreted as the timeout for that call (None -> poll_time). It used to be a per-poll sleep. Call sites pass wait=60 / 5 meaning "wait up to N seconds".
+- "Page changed" = captured <html> root stale OR fragment-stripped URL changed, then readyState complete, then one settle poll. Clicked-element staleness counts only when no root exists (Appium native), because React re-renders buttons on click.
+- Legacy click_and_wait_for_* predicates keep raw element.click() retried per poll (raises on overlay interception); their success condition becomes a strict superset of the old one.
+- Shadowed duplicate: keep find_and_send_modifer_key(locator, key); rename the element variant to send_modifer_key_to_element (no callers anywhere).
+
+### Issues / Blockers
+- `make install` needs the user's interactive uv setup (or `--python ... --break-system-packages`); see Commands Run.
+- Behaviour notes for callers: `automaticserveradd.py:37` (throw=True) used to pass silently when the accept button was absent; it will now raise after poll_time (guard with `if client.element_exists(xpath, timeout=3):`). `wait` on the two disappear methods is now a timeout (None -> poll_time).
+
+### Next Steps
+- User to update drive-by-page.py login() to `click_and_wait_for_page_change` + `element_exists` / `element_does_not_exist` (snippet given in chat; script intentionally not edited).
+- Commit when asked (submodule first, then monorepo gitlink). poetry.lock has unrelated pre-existing changes.
+- Later: mirror into pylibzen; declare psutil in pyproject; wire action_delay/DelayerMetaClass; fix locatorResult->XPathResult, check_node_css_property .group, get_current_iframe return, PerformanceClient return_value.
+
+### Handoff Summary
+Work complete and verified. Page-change primitive = <html> root stale OR fragment-stripped URL changed, then readyState complete, then one settle poll (wait.py WaitForPageChange). Legacy click_and_wait_for_* predicates are subclasses of WaitForPageChangeAfterClick with require_navigation=False. New client methods: get_page_root, get_current_url, wait_for_page_change, wait_for_url_change, click_and_wait_for_page_change, click_element_and_wait_for_page_change, element_does_not_exist. Resume at "Next Steps".
+
+### 2026-10-07 17:30 - Claude (Fable 5.1)
+
+#### User Request
+"Click a button, only proceed after the HTML has completely changed pages, then check via XPath whether elements exist / don't exist before proceeding. Improve the code base's functionality and efficacy."
+
+#### Work Done
+Investigation, approved plan, implementation, build/install (0.4.0), and a 29-case headless smoke test on Chrome and Firefox (all pass). Root causes: wait_for_element_to_disappear splats a string locator (TypeError -> bare except -> instant True); `wait` was a per-poll sleep; WaitForHtmlLoadAfterClick first-poll false positive; WaitForHtmlLoadAfterClickElement treats staleness as failure; WaitForElementAfterClick re-finds the clicked locator after navigation; no page-change primitive exists.
+
+#### Important Details
+- Follow-ups not in scope: pylibzen mirror; automaticserveradd.py:37 runs throw=True so an absent accept button will now raise instead of silently passing (guard with element_exists); removefbmemories.py:120 waits on a locator shared by all matched buttons (times out before and after); psutil undeclared in pyproject; action_delay/DelayerMetaClass never applied; set_attribute_of_node uses `locatorResult` instead of `XPathResult`; check_node_css_property calls .group on a list; get_current_iframe never returns; PerformanceClient calls execute_script without return_value=True.

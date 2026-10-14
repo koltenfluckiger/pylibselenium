@@ -1,23 +1,29 @@
-try:
-    from enum import Enum
-    from selenium.webdriver.common.keys import Keys
-except ImportError as err:
-    print("Unable to import: {}".format(err))
-    exit()
+"""Enumerations shared by the driver client."""
+from enum import Enum
 
 
-class MODIFERKEYS(Enum):
+class MODIFERKEYS(str, Enum):
+    """
+    Key codes for modifier and control keys.
 
-    CTRL = "\ue009"
-    ALT = "\ue00a"
-    SHIFT = "\ue008"
-    ENTER = "\ue007"
+    Members are ``str`` subclasses, so they can be passed straight to ``ActionChains.key_down`` or
+    ``WebElement.send_keys``; ``.value`` keeps working for callers that already use it.
+    """
+
+    CTRL = ""
+    ALT = ""
+    SHIFT = ""
+    ENTER = ""
 
     def __str__(self):
         return self.value
 
     def __repr__(self):
         return self.value
+
+
+# Correctly spelled alias; ``MODIFERKEYS`` is kept for existing callers.
+MODIFIERKEYS = MODIFERKEYS
 
 
 class DROPDOWNTYPE(Enum):
